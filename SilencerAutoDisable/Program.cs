@@ -7,9 +7,9 @@ using Ensage.Common.Extensions;
 using SharpDX;
 using Ensage.Common.Menu;
 
-namespace ChallengeAccepted
+namespace SilencerAutoDisable
 {
-    class SilenceAccepted
+    class Program
     {
         private static readonly Menu Menu = new Menu("DisableAccepted", "DisableAccepted", true, "npc_dota_hero_silencer", true);
         private static Hero me, target;
@@ -33,7 +33,8 @@ namespace ChallengeAccepted
             {
                 foreach (var v in Ensage.Common.Objects.Heroes.GetByTeam(me.GetEnemyTeam()))
                 {
-                    if(v.ClassID == ClassID.CDOTA_Unit_Hero_Enigma && v.IsAlive && v.IsChanneling())
+                    var channel = v.GetChanneledAbility();
+                    if(v.ClassID == ClassID.CDOTA_Unit_Hero_Enigma && v.IsAlive && v.IsChanneling() && channel.Name != "item_travel_boots" && channel.Name != "item_travel_boots_2" && channel.Name != "item_tpscroll")
                     {
                         globalSilence.UseAbility();
                         Utils.Sleep(300, "global_silence");
