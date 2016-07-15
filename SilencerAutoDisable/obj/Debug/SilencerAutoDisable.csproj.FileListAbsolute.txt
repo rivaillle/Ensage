@@ -1,0 +1,10 @@
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.exe.config
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Common.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SharpDX.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Common.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\obj\Debug\SilencerAutoDisable.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\obj\Debug\SilencerAutoDisable.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Newtonsoft.Json.dll

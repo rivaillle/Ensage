@@ -1,0 +1,14 @@
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.exe.config
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SilencerAutoDisable.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Common.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Menu.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SharpDX.Direct3D9.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\SharpDX.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\EnsageSharp.Sandbox.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Common.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\bin\Debug\Ensage.Menu.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\obj\x64\Debug\SilencerAutoDisable.csprojResolveAssemblyReference.cache
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\obj\x64\Debug\SilencerAutoDisable.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\SilencerAutoDisable\obj\x64\Debug\SilencerAutoDisable.pdb

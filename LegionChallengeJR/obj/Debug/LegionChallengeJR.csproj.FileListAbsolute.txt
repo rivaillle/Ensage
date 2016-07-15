@@ -1,0 +1,10 @@
+c:\users\junior\documents\visual studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\LegionChallengeJR.exe.config
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\LegionChallengeJR.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\LegionChallengeJR.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\Ensage.Common.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\Ensage.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\SharpDX.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\Ensage.Common.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\obj\Debug\LegionChallengeJR.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\obj\Debug\LegionChallengeJR.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\LegionChallengeJR\bin\Debug\Newtonsoft.Json.dll
