@@ -1,0 +1,11 @@
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\AutoSupport.exe.config
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\AutoSupport.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\AutoSupport.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\Ensage.Common.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\Ensage.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\SharpDX.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\SharpDX.Direct3D9.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\bin\Debug\Ensage.Common.pdb
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\obj\Debug\AutoSupport.exe
+C:\Users\Junior\Documents\Visual Studio 2015\Projects\Dotinha\AutoSupport\obj\Debug\AutoSupport.pdb
