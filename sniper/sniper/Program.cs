@@ -13,8 +13,10 @@ namespace SupportSharp
         private const Key toggleKey = Key.T;
         private const Key saveSelfKey = Key.Y;
         private static Hero me;
-        private static Ability misticAbility;
-        private static double[] misticDamagePerLevel = new double[] { 100, 150, 200, 250 };
+        private static Ability assassination;
+        private static Ability takeAim;
+        private static double[] assassinationDamagePerLevel = new double[] { 320, 485, 650 };
+        private static double[] extraAimPerLevel = new double[] { 100, 200, 300, 400 };
         private static Entity fountain;
         private static bool loaded;
 
@@ -30,7 +32,9 @@ namespace SupportSharp
             CrimsonGuard,
             Stick,
             Wand,
-            Phase;
+            Phase,
+            Hurrikane,
+            DragonLance;
 
         private static Hero needMana;
         private static Hero needMeka;
@@ -59,13 +63,15 @@ namespace SupportSharp
             Pipe = null;
             CrimsonGuard = null;
             Phase = null;
+            Hurrikane = null;
+            DragonLance = null;
             loaded = false;
             supportActive = true;
             includeSaveSelf = false;
             shouldCastLotusOrb = false;
             shouldCastGlimmerCape = false;
 
-            misticAbility = null;
+            assassination = null;
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -122,14 +128,18 @@ namespace SupportSharp
             GlimmerCape = me.FindItem("item_glimmer_cape");
             Pipe = null;//me.FindItem("item_pipe");
             CrimsonGuard = me.FindItem("item_crimson_guard");
-            misticAbility = me.Spellbook.SpellQ;
+            assassination = me.Spellbook.SpellR;
+            takeAim = me.Spellbook.SpellE;
             Stick = me.FindItem("item_magic_stick");
             Wand = me.FindItem("item_magic_wand");
             Phase = me.FindItem("item_phase_boots");
+            DragonLance = me.FindItem("item_dragon_lance");
+            Hurrikane = me.FindItem("item_hurricane_pike");
             needMana = null;
             needMeka = null;
             shouldCastLotusOrb = false;
             shouldCastGlimmerCape = false;
+
 
             if (!Game.IsChatOpen)
             {
@@ -158,6 +168,62 @@ namespace SupportSharp
                     Phase.UseAbility();
                     Utils.Sleep(500, "phaseboots");
                 }
+
+                double assassinationDamage = 0;
+                if (assassination.Level > 0)
+                {
+                    assassinationDamage = assassinationDamagePerLevel[assassination.Level - 1];
+                }
+                double extraRange = 0;
+                if (takeAim.Level > 0)
+                {
+                    extraRange = extraAimPerLevel[takeAim.Level - 1];
+                }
+                if(DragonLance != null || Hurrikane != null)
+                {
+                    extraRange += 140;
+                }
+                if (Utils.SleepCheck("debug"))
+                {
+                    foreach(var item in me.Inventory.Items)
+                    {
+                        Console.WriteLine(item.Name);
+                        Utils.Sleep(1000, "debug");
+                    }
+                }
+                var orbwalker = Orbwalking.new(me, false);
+                double totalRange = me.AttackRange + extraRange;
+                if (!me.IsAttacking() && !me.IsChanneling() && me.CanCast() && !Game.IsKeyDown(Key.Space) && !IsInDanger2(me) && Utils.SleepCheck("assassination"))
+                {
+                    var myEnemyList =
+                                        ObjectMgr.GetEntities<Hero>()
+                                            .Where(
+                                                x =>
+                                                    x.Team != me.Team && !x.IsIllusion && x.IsAlive &&
+                                                    me.Distance2D(x) <= assassination.CastRange && me.Distance2D(x) > totalRange)
+                                            .ToList();
+
+                    if (myEnemyList.Any())
+                    {
+                        foreach (var enemy in myEnemyList)
+                        {
+                            var enemyResistence = enemy.MagicDamageResist;
+                            double totalDamage = assassinationDamage - assassinationDamage * enemyResistence;
+
+                            totalDamage += totalDamage * (me.Intelligence % 16) / 100;
+                            Console.WriteLine(totalDamage);
+                            if (totalDamage >= (enemy.Health + enemy.HealthRegeneration * 2))
+                            {
+                                Console.WriteLine(totalDamage);
+                                assassination.UseAbility(enemy);
+                                Utils.Sleep(1000, "assassination");
+                            }
+                            //Console.WriteLine("total damage is:" + totalDamage);
+
+                        }
+                    }
+                }
+
             }
         }
    

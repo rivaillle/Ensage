@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BristleJR", "BristleJR\BristleJR.csproj", "{CF77EECF-DB40-456F-AFC2-F6BD1D759432}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sniper", "..\sniper\sniper\sniper.csproj", "{6958E8C7-3F87-4179-B024-CDD8456F34A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSupport", "..\AutoSupport\AutoSupport\AutoSupport.csproj", "{10B12256-ED9E-47C3-B9F8-A2BF70BC6E95}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CF77EECF-DB40-456F-AFC2-F6BD1D759432}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF77EECF-DB40-456F-AFC2-F6BD1D759432}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF77EECF-DB40-456F-AFC2-F6BD1D759432}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF77EECF-DB40-456F-AFC2-F6BD1D759432}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6958E8C7-3F87-4179-B024-CDD8456F34A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6958E8C7-3F87-4179-B024-CDD8456F34A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6958E8C7-3F87-4179-B024-CDD8456F34A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6958E8C7-3F87-4179-B024-CDD8456F34A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10B12256-ED9E-47C3-B9F8-A2BF70BC6E95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10B12256-ED9E-47C3-B9F8-A2BF70BC6E95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10B12256-ED9E-47C3-B9F8-A2BF70BC6E95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10B12256-ED9E-47C3-B9F8-A2BF70BC6E95}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

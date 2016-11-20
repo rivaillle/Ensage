@@ -30,7 +30,9 @@ namespace SupportSharp
             Pipe,
             CrimsonGuard,
             Stick,
-            Wand;
+            Wand,
+            QuellingBlade,
+            Tango;
 
         private static Hero needMana;
         private static Hero needMeka;
@@ -57,7 +59,8 @@ namespace SupportSharp
             GlimmerCape = null;
             Pipe = null;
             CrimsonGuard = null;
-
+            QuellingBlade = null;
+            Tango = null;
             loaded = false;
             supportActive = true;
             includeSaveSelf = false;
@@ -75,12 +78,8 @@ namespace SupportSharp
                 var orbwalkMode = Game.IsKeyDown(orbwalkKey) ? "ON" : "OFF";
                 var includeSelfMode = includeSaveSelf ? "ON" : "OFF";
                 Drawing.DrawText("Auto Support is: " + mode + ". Hotkey (Toggle): " + toggleKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), Color.LightGreen, FontFlags.DropShadow);
-                Drawing.DrawText("Orbwalk is: " + orbwalkMode + ". Hotkey (HOLD): " + orbwalkKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 6 / 100), Color.LightGreen, FontFlags.DropShadow);
-                Drawing.DrawText(
-                    "Include Saving yourself?: " + includeSelfMode + ". Hotkey (TOGGLE): " + saveSelfKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 8 / 100), Color.LightGreen, FontFlags.DropShadow);
+                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), Color.LightBlue, FontFlags.DropShadow);
+                
             }
         }
 
@@ -127,6 +126,7 @@ namespace SupportSharp
             misticAbility = me.Spellbook.SpellQ;
             Stick = me.FindItem("item_magic_stick");
             Wand = me.FindItem("item_magic_wand");
+            QuellingBlade = me.FindItem("item_quelling_blade");
             needMana = null;
             needMeka = null;
             shouldCastLotusOrb = false;
@@ -189,10 +189,10 @@ namespace SupportSharp
                 }
 
                 var myEnemyList =
-                                    ObjectMgr.GetEntities<Hero>()
+                                    ObjectManager.GetEntitiesFast<Hero>()
                                         .Where(
                                             x =>
-                                                x.Team != me.Team && !x.IsIllusion && x.IsAlive && x.CanCast() &&
+                                                x.Team != me.Team && !x.IsIllusion && x.IsAlive &&
                                                 me.Distance2D(x) <= 800 + extraRange)
                                         .ToList();
 
@@ -218,13 +218,13 @@ namespace SupportSharp
                 }
 
                 var allies =
-                    ObjectMgr.GetEntities<Hero>()
+                    ObjectManager.GetEntitiesFast<Hero>()
                         .Where(
                             ally =>
                                 ally.Team == me.Team && me.ClassID != ally.ClassID && ally.IsAlive && !ally.IsIllusion && me.Distance2D(ally) <= 1500)
                         .ToList();
                 fountain =
-                    ObjectMgr.GetEntities<Entity>()
+                    ObjectManager.GetEntitiesFast<Entity>()
                         .First(entity => entity.ClassID == ClassID.CDOTA_Unit_Fountain && entity.Team == me.Team);
 
 
@@ -247,7 +247,7 @@ namespace SupportSharp
                             }
 
                             var enemyTowers =
-                                ObjectMgr.GetEntities<Entity>()
+                                ObjectManager.GetEntities<Entity>()
                                     .Any(
                                         x =>
                                             x.ClassID == ClassID.CDOTA_BaseNPC_Tower && x.Team != me.Team &&
@@ -289,13 +289,13 @@ namespace SupportSharp
                                      (CrimsonGuard != null && CrimsonGuard.CanBeCasted())) && me.CanUseItems())
                                 {
                                     var enemiesInRadius =
-                                        ObjectMgr.GetEntities<Hero>()
+                                        ObjectManager.GetEntities<Hero>()
                                             .Where(
                                                 x =>
                                                     x.Team != me.Team && x.IsAlive && me.Distance2D(x) <= 1500 &&
                                                     !x.IsIllusion).ToList();
                                     var alliesInRadius =
-                                        ObjectMgr.GetEntities<Hero>()
+                                        ObjectManager.GetEntities<Hero>()
                                             .Where(
                                                 x =>
                                                     x.Team == me.Team && x.IsAlive && me.Distance2D(x) <= 900 &&
@@ -322,7 +322,7 @@ namespace SupportSharp
                                 }
 
                                 var enemyList =
-                                    ObjectMgr.GetEntities<Hero>()
+                                    ObjectManager.GetEntities<Hero>()
                                         .Where(
                                             x =>
                                                 x.Team != me.Team && !x.IsIllusion && x.IsAlive && x.CanCast() &&
@@ -447,7 +447,20 @@ namespace SupportSharp
                     }
                 }
             }
-
+            if (QuellingBlade != null && QuellingBlade.Cooldown == 0) {
+                var wards =
+                                        ObjectManager.GetEntitiesFast<Unit>()
+                                            .Where(
+                                                x =>
+                                                    x.Team != me.Team && (x.ClassID == ClassID.CDOTA_NPC_Observer_Ward || x.ClassID == ClassID.CDOTA_NPC_Observer_Ward_TrueSight) &&
+                                                    me.Distance2D(x) <= 475)
+                                            .ToList();
+                if (wards.Any() && Utils.SleepCheck("deward"))
+                {
+                    QuellingBlade.UseAbility(wards[0]);
+                    Utils.Sleep(1000, "deward");
+                }
+            }
             if (Game.IsKeyDown(orbwalkKey))
             {
                 if (target != null && (!target.IsValid || !target.IsVisible || !target.IsAlive || target.Health <= 0))
@@ -810,7 +823,7 @@ namespace SupportSharp
 
                     foreach (var buff in buffs2)
                     {
-                        //Console.WriteLine(ally.Name + " has modifier: " + buff.Name);
+                        Console.WriteLine(ally.Name + " has modifier: " + buff.Name);
                     }
 
                 }
