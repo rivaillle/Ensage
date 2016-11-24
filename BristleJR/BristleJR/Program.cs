@@ -14,7 +14,7 @@ namespace BristleJR
     {
         private static Ability Quill, Goo;
         private static Hero _source, _target;
-        private static Item abyssal, solar, medallion, halberd, atos, dust, Stick, Wand, Crimson, Quelling, bladeMail;
+        private static Item abyssal, blink, solar, medallion, halberd, atos, dust, Stick, Wand, Crimson, Quelling, bladeMail;
         private static Ensage.Items.PowerTreads threads;
         private const Key triggerKey = Key.B;
         private const Key chaseKey = Key.G;
@@ -94,14 +94,13 @@ namespace BristleJR
             {
                 atos = _source.FindItem("item_rod_of_atos");
             }
-            if (solar == null)
-            {
-                solar = _source.FindItem("item_solar_crest");
-            }
+            
+            medallion = _source.FindItem("item_medallion_of_courage");
             if (medallion == null)
             {
-                medallion = _source.FindItem("item_medallion_of_courage");
+                medallion =_source.FindItem("item_solar_crest");
             }
+
             if (halberd == null)
             {
                 halberd = _source.FindItem("item_heavens_halberd");
@@ -110,7 +109,7 @@ namespace BristleJR
             {
                 threads = (Ensage.Items.PowerTreads)_source.FindItem("item_power_treads");
             }
-           
+                       
             Stick = _source.FindItem("item_magic_stick");            
             Wand = _source.FindItem("item_magic_wand");
             
@@ -213,10 +212,16 @@ namespace BristleJR
                 Console.WriteLine(item.Name);
             }
             */
-            if (Crimson != null || bladeMail != null || halberd != null)
+            if (Crimson != null || bladeMail != null || halberd != null || medallion != null)
             {
                 foreach (var enemy in _enemy)
                 {
+                    /*
+                    foreach (var modifier in enemy.Modifiers.ToList())
+                    {
+                        Console.WriteLine(modifier.Name);
+                    }
+                    */
                     if (Crimson != null)
                     {
                         if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && _source.Distance2D(enemy) < 400 && enemy.HasModifier("modifier_juggernaut_omnislash") && Utils.SleepCheck("crimson"))
@@ -232,7 +237,7 @@ namespace BristleJR
                         }
                         else if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) < 400 && Utils.SleepCheck("crimson"))
                         {
-                            var blink = enemy.FindItem("item_blink");
+                            blink = enemy.FindItem("item_blink");
                             if (blink != null && blink.Cooldown > 8)
                             {
                                 if (!((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && !enemy.HasModifier("modifier_sven_gods_strength")) || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && !(enemy.Spellbook.SpellR.CanBeCasted()))))
@@ -244,8 +249,13 @@ namespace BristleJR
                             }
                         }
                     }
-                    if (bladeMail != null)
+                    if (bladeMail != null && bladeMail.CanBeCasted())
                     {
+                        if (_source.HasModifier("modifier_silver_edge_debuff"))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(1000 + Game.Ping, "blademail");
+                        }
                         if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Axe && _source.Distance2D(enemy) < 350 && Utils.SleepCheck("blademail") && enemy.Spellbook.SpellQ.CanBeCasted()))
                         {
                             var blink = enemy.FindItem("item_blink");
@@ -256,29 +266,116 @@ namespace BristleJR
                             }
                                 
                         }
+                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_sven_gods_strength") && IsFacing(enemy, _source))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(1000 + Game.Ping, "blademail");
+
+                        }
+                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_phantom_assassin_phantom_strike") && IsFacing(enemy, _source))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(1000 + Game.Ping, "blademail");
+
+                        }
                     }
-                    if(halberd != null)
+                    if(halberd != null && Utils.SleepCheck("halberd") && halberd.CanBeCasted())
                     {
+                        
                         if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 600 && Utils.SleepCheck("heaven"))
                         {
-                            if (_source.Distance2D(enemy) <= 150 && (enemy.Spellbook.SpellR.CanBeCasted()) && IsFacing(enemy, _source))
+                            if (_source.Distance2D(enemy) <= 200 && (enemy.Spellbook.SpellR.CanBeCasted()) && IsFacing(enemy, _source))
                             {
                                 halberd.UseAbility(enemy);
+                                Utils.Sleep(1000 + Game.Ping, "halberd");
                             }
-                            else if (blink != null && blink.Cooldown > 8)
+                            else if (enemy.HasModifier("modifier_legion_commander_duel") && _source.CanCast())
                             {
-                                if (!((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && !enemy.HasModifier("modifier_sven_gods_strength")) || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && !(enemy.Spellbook.SpellR.CanBeCasted()))))
-                                {
-                                    Crimson.UseAbility();
-                                    Utils.Sleep(4000 + Game.Ping, "crimson");
-                                }
-
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000 + Game.Ping, "halberd");
                             }
+                        }
+                    }
+                    if (medallion != null && medallion.CanBeCasted())
+                    {
+                        var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != _source.ClassID && hero.Team == _source.Team);
+
+                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_legion_commander_duel"))
+                        {
+                            foreach (var ally in allies)
+                            {
+                                if(ally.HasModifier("modifier_legion_commander_duel"))
+                                {
+                                    medallion.UseAbility(ally);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                            }
+                            
+                        }
+                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_sven_gods_strength"))
+                        {
+                            foreach (var ally in allies)
+                            {
+                                if (IsFacing(enemy, ally))
+                                {
+                                    medallion.UseAbility(ally);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                            }
+
+                        }
+                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar"))
+                        {
+                            foreach (var ally in allies)
+                            {
+                                if (IsFacing(enemy, ally) && ally.Distance2D(enemy) <= 200)
+                                {
+                                    medallion.UseAbility(ally);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                            }
+
+                        }
+                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Axe) && _source.Distance2D(enemy) <= 1000 && enemy.HasModifier("modifier_axe_berserkers_call_armor") && Utils.SleepCheck("solar"))
+                        {
+                            foreach (var ally in allies)
+                            {
+                                if (ally.Distance2D(enemy) <= 300)
+                                {
+                                    medallion.UseAbility(ally);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                            }
+
                         }
                     }
                 }
             }
-            
+
+            if (chase)
+            {
+                if(medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted())
+                {
+                    var enemy = _source.ClosestToMouseTarget();
+                    var isSafe = true;
+                    foreach (var enemyUnit in _enemy)
+                    {
+                        blink = enemyUnit.FindItem("item_blink");
+                        if (enemyUnit.ClassID != enemy.ClassID && _source.Distance2D(enemyUnit) < 800 && (IsFacing(enemyUnit, _source) || (blink != null && blink.Cooldown > 6)))
+                        {
+                            isSafe = false;
+                        }
+                    }
+
+                    if (isSafe)
+                    {                        
+                        medallion.UseAbility(enemy);
+                        Utils.Sleep(1000, "solar");
+                    }
+                }
+
+            }
+
             if (Quelling != null && Quelling.Cooldown == 0)
             {
                 var wards =
