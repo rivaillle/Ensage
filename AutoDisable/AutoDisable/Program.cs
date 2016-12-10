@@ -346,7 +346,6 @@ namespace Auto_Disable
             ItemList.Add("item_abyssal_blade");
             ItemList.Add("item_ethereal_blade");
             ItemList.Add("item_rod_of_atos");
-            ItemList.Add("item_heavens_halberd");
             ItemList.Add("item_cyclone");
             ItemList.Add("item_blade_mail");
             ItemList.Add("item_lotus_orb");
@@ -540,7 +539,7 @@ namespace Auto_Disable
             var safeItemTargetEnemy = enumerable.FirstOrDefault(
                 x =>
                     (x.Name == "item_sheepstick" || x.Name == "item_orchid" || x.Name == "item_abyssal_blade" || x.Name == "item_bloodthorn" ||
-                    x.Name == "item_heavens_halberd" || x.Name == "item_cyclone") && ExtraSubMenu[i, 0].Item("SelectedItems" + me.Name + target.Name).GetValue<AbilityToggler>().IsEnabled(x.Name));
+                   x.Name == "item_cyclone") && ExtraSubMenu[i, 0].Item("SelectedItems" + me.Name + target.Name).GetValue<AbilityToggler>().IsEnabled(x.Name));
             var safeItemPoint = enumerable.FirstOrDefault(
                 x =>
                     x.Name == "item_blink");
@@ -651,7 +650,7 @@ namespace Auto_Disable
                             (x.Name == "item_sheepstick" || x.Name == "item_orchid" || x.Name == "item_bloodthorn" ||
                              x.Name == "item_abyssal_blade" ||
                              x.Name == "item_ethereal_blade" ||
-                             x.Name == "item_rod_of_atos" || x.Name == "item_heavens_halberd" ||                            
+                             x.Name == "item_rod_of_atos" ||                            
                              x.Name == "item_cyclone") &&
                             ExtraSubMenu[i, 0].Item("SelectedItems" + me.Name + target.Name)
                                 .GetValue<AbilityToggler>()

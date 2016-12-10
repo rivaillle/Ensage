@@ -78,13 +78,9 @@ namespace SupportSharp
                 var orbwalkMode = Game.IsKeyDown(orbwalkKey) ? "ON" : "OFF";
                 var includeSelfMode = includeSaveSelf ? "ON" : "OFF";
                 Drawing.DrawText("Auto Support is: " + mode + ". Hotkey (Toggle): " + toggleKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), Color.LightGreen, FontFlags.DropShadow);
-                Drawing.DrawText("Orbwalk is: " + orbwalkMode + ". Hotkey (HOLD): " + orbwalkKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 6 / 100), Color.LightGreen, FontFlags.DropShadow);
-                Drawing.DrawText(
-                    "Include Saving yourself?: " + includeSelfMode + ". Hotkey (TOGGLE): " + saveSelfKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 8 / 100), Color.LightGreen, FontFlags.DropShadow);
-                if(rangeDisplay == null)
+                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), Color.LightBlue, FontFlags.DropShadow);
+
+                if (rangeDisplay == null)
                 {
                     rangeDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
                     rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
@@ -142,10 +138,14 @@ namespace SupportSharp
             needMana = null;
             needMeka = null;
 
-            if((soulRing != null && Utils.SleepCheck("HealSpell") && soulRing.CanBeCasted()) || me.Mana > 600)
+            if ((soulRing != null && Utils.SleepCheck("HealSpell") && soulRing.CanBeCasted()))
             {
-                healThreshold = 0.75;
-            }else
+                healThreshold = 0.8;
+            } else if (me.Mana > 450)
+            {
+                healThreshold = 0.64;
+            }
+            else
             {
                 healThreshold = 0.35;
             }
@@ -311,7 +311,7 @@ namespace SupportSharp
                     ObjectManager.GetEntitiesFast<Hero>()
                         .Where(
                             x =>
-                                x.Team == self.Team && self.Distance2D(x) <= castRange && IsInDangerRepel(x) && !x.IsIllusion && x.IsAlive);
+                                x.Team == self.Team && me.Distance2D(x) <= castRange && IsInDangerRepel(x) && !x.IsIllusion && x.IsAlive);
                      
                 if (allies.Any())
                 {
@@ -338,7 +338,7 @@ namespace SupportSharp
                     (!self.IsInvisible() || !me.Modifiers.Any(x => x.Name == "modifier_treant_natures_guise")) &&
                     self.Distance2D(fountain) > 1000)
                 {
-                    var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != me.ClassID && hero.Team == me.Team);
+                    var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && hero.Distance2D(me) <= range && !hero.IsIllusion && hero.ClassID != me.ClassID && hero.Team == me.Team);
 
                     if (allies.Any())
                     {
@@ -346,7 +346,7 @@ namespace SupportSharp
                         {
                             if (ally.Health <= (ally.MaximumHealth * healThreshold) && healSpell.CanBeCasted() &&
                                 self.Distance2D(fountain) > 1000 && IsInDangerHeal(ally) &&
-                                ally.Health + amount[healSpell.Level - 1] <= ally.MaximumHealth)
+                                ally.Health + amount[healSpell.Level - 1] <= ally.MaximumHealth && !ally.IsMagicImmune())
                             {
                                 CastHeal(healSpell, ally);                               
                                 Utils.Sleep(1000 + Game.Ping, "ToggleHeal");
@@ -502,7 +502,7 @@ namespace SupportSharp
 
                     foreach (var buff in buffs2)
                     {
-                        //Console.WriteLine(ally.Name + " has modifier: " + buff.Name);
+                        Console.WriteLine(ally.Name + " has modifier: " + buff.Name);
                     }
 
                 }
@@ -547,23 +547,36 @@ namespace SupportSharp
                             {
                                 miracleSpell.UseAbility();
                                 Utils.Sleep(4000 + Game.Ping, "miracle");
+                                return;
 
                             }
-                            var blink = enemy.FindItem("item_blink");
-                            if (blink != null && blink.Cooldown > 8)
+                            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && enemy.HasModifier("modifier_sven_gods_strength"))
                             {
-                                if (!((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && !enemy.HasModifier("modifier_sven_gods_strength")) || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && !(enemy.Spellbook.SpellR.CanBeCasted()))))
-                                {
-                                    miracleSpell.UseAbility();
-                                    Utils.Sleep(4000 + Game.Ping, "crimson");
-                                }
+                                allyForMiracle(miracleSpell, enemy);
 
+                            }
+                            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && (enemy.HasModifier("modifier_legion_commander_duel") || enemy.Spellbook.SpellR.IsInAbilityPhase))
+                            {
+                                allyForMiracle(miracleSpell, enemy);
                             }
                         }
 
                     }
                 }
 
+            }
+        }
+
+        private static void allyForMiracle(Ability miracleSpell, Hero enemy)
+        {
+            var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && hero.Distance2D(me) <= miracleSpell.GetRadius() && !hero.IsIllusion && hero.Team == me.Team);
+            foreach (var ally in allies)
+            {
+                if (IsFacing(enemy, ally) && enemy.Distance2D(ally) <= 250)
+                {
+                    miracleSpell.UseAbility();
+                    Utils.Sleep(4000, "miracle");
+                }
             }
         }
 

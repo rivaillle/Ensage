@@ -14,7 +14,7 @@ namespace BristleJR
     {
         private static Ability Quill, Goo;
         private static Hero _source, _target;
-        private static Item abyssal, blink, solar, medallion, halberd, atos, dust, Stick, Wand, Crimson, Quelling, bladeMail;
+        private static Item abyssal, blink, solar, medallion, pipe, halberd, atos, dust, Stick, Wand, Crimson, Quelling, bladeMail;
         private static Ensage.Items.PowerTreads threads;
         private const Key triggerKey = Key.B;
         private const Key chaseKey = Key.G;
@@ -139,7 +139,11 @@ namespace BristleJR
                 Quelling = _source.FindItem("item_iron_talon");
             }
             bladeMail = _source.FindItem("item_blade_mail");
-
+            pipe = _source.FindItem("item_hood_of_defiance");
+            if(pipe == null)
+            {
+                pipe = _source.FindItem("item_pipe");
+            }
 
             if (IsInDanger(_source, _enemy) && _source.Health <= _source.MaximumHealth * 0.35)
             {
@@ -240,12 +244,18 @@ namespace BristleJR
             */
             if (Crimson != null || bladeMail != null || halberd != null || medallion != null)
             {
+                var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != _source.ClassID && hero.Team == _source.Team);
                 foreach (var enemy in _enemy)
-                {              
-
+                {
+                    dealWithAntiMage(allies, enemy);
+                    dealWithHuskar(allies, enemy);
+                    dealWithSven(allies, enemy);
+                    dealWithSlark(allies, enemy);
+                    dealWithDrow(allies, enemy);
+                    dealWithLuna(allies, enemy);
                     if (Crimson != null)
                     {
-                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && _source.Distance2D(enemy) < 400 && enemy.HasModifier("modifier_juggernaut_omnislash") && Utils.SleepCheck("crimson"))
+                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && _source.Distance2D(enemy) < 400 && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")) && Utils.SleepCheck("crimson"))
                         {
                             Crimson.UseAbility();
                             Utils.Sleep(4000 + Game.Ping, "crimson");
@@ -327,10 +337,18 @@ namespace BristleJR
                                 Utils.Sleep(5000 + Game.Ping, "halberd");
                             }
                         }
+                        else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar && enemy.Distance2D(_source) <= 600)
+                        {
+                            var ult = enemy.Spellbook.SpellR;
+                            if (ult != null && ult.Cooldown > 0 && enemy.IsAttacking())
+                            {
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000, "halberd");
+                            }
+                        }
                     }
                     if (medallion != null && medallion.CanBeCasted())
                     {
-                        var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != _source.ClassID && hero.Team == _source.Team);
 
                         if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_legion_commander_duel"))
                         {
@@ -404,7 +422,6 @@ namespace BristleJR
 
                     if (Goo != null && Goo.CanBeCasted() && Utils.SleepCheck("goo"))
                     {
-                        Console.WriteLine(enemy.Name);
                         /*foreach (var modifier in enemy.Modifiers.ToList())
                         {
                             Console.WriteLine(modifier.Name);
@@ -690,6 +707,268 @@ namespace BristleJR
                     break;
             }
         }
+
+        private static void dealWithAntiMage(IEnumerable<Hero> allies, Hero enemy)        
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage)
+            {
+                var manta = enemy.FindItem("item_manta");
+                if (manta != null && manta.Cooldown > 20 && enemy.IsAttacking())
+                {
+                    foreach (var ally in allies)
+                    {
+                        if (IsFacing(enemy, ally))
+                        {
+                            if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd"))
+                            {
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000, "halberd");
+                            }
+                            if (medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar"))
+                            {
+                                medallion.UseAbility(ally);
+                                Utils.Sleep(1000, "solar");
+                            }
+                            break;
+                        }
+                    }
+
+                    if (IsFacing(enemy, _source))
+                    {
+                        if (Utils.SleepCheck("halberd"))
+                        {
+                            halberd.UseAbility(enemy);
+                            Utils.Sleep(5000, "halberd");
+                        }
+                        if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(5000, "blademail");
+                        }
+                    }
+                }
+            }
+        }
+
+        //Against Huskar go BladeMail, SolarCrest, Halberd and Pipe
+        private static void dealWithHuskar(IEnumerable<Hero> allies, Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar)
+            {
+                var ult = enemy.Spellbook.SpellR;
+                if (ult.IsInAbilityPhase)
+                {
+                    foreach (var ally in allies)
+                    {
+                        if (IsFacing(enemy, ally))
+                        {
+                            if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600)
+                            {
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000, "halberd");
+                            }
+                            if (medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") && _source.Distance2D(ally) <= 1000)
+                            {
+                                medallion.UseAbility(ally);
+                                Utils.Sleep(1000, "solar");
+                            }
+                            if (pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe") && _source.Distance2D(ally) <= 900)
+                            {
+                                pipe.UseAbility();
+                                Utils.Sleep(5000, "pipe");
+                            }
+                            break;
+                        }
+                    }
+
+                    if (IsFacing(enemy, _source))
+                    {                        
+                        if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(5000, "blademail");
+                        }
+                        if(pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe"))
+                        {
+                            pipe.UseAbility();
+                            Utils.Sleep(5000, "pipe");
+                        }
+                    }
+                }else if (ult.Cooldown > 0 && enemy.IsAttacking() && IsFacing(enemy, _source) && _source.HasModifier("huskar_life_break"))
+                {
+                    if (Utils.SleepCheck("halberd"))
+                    {
+                        halberd.UseAbility(enemy);
+                        Utils.Sleep(5000, "halberd");
+                    }
+                }
+            }
+        }
+
+        //Against Huskar go BladeMail, SolarCrest, Halberd and Pipe
+        private static void dealWithSven(IEnumerable<Hero> allies, Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven)
+            {
+                var ult = enemy.Spellbook.SpellR;
+                if (enemy.HasModifier("modifier_sven_gods_strength"))
+                {
+                    var bkb = enemy.FindItem("item_black_king_bar");
+                    foreach (var ally in allies)
+                    {
+                        if (IsFacing(enemy, ally) && enemy.Distance2D(ally) <= 200)
+                        {
+                            if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600)
+                            {
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000, "halberd");
+                            }
+                            if (medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") && _source.Distance2D(ally) <= 1000)
+                            {
+                                medallion.UseAbility(ally);
+                                Utils.Sleep(1000, "solar");
+                            }                            
+                            break;
+                        }
+                    }
+
+                    if (IsFacing(enemy, _source) && enemy.Distance2D(_source) <= 200)
+                    {
+                        if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(5000, "blademail");
+                        }
+                        if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd"))
+                        {
+                            halberd.UseAbility(enemy);
+                            Utils.Sleep(5000, "halberd");
+                        }
+
+                    }
+                }
+                else if (ult.Cooldown > 0 && enemy.IsAttacking() && IsFacing(enemy, _source) && _source.HasModifier("huskar_life_break"))
+                {
+                    if (Utils.SleepCheck("halberd"))
+                    {
+                        halberd.UseAbility(enemy);
+                        Utils.Sleep(5000, "halberd");
+                    }
+                }
+            }
+        }
+
+        //Against Slark go BladeMail, SolarCrest, Halberd
+        private static void dealWithSlark(IEnumerable<Hero> allies, Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark)
+            {
+                var pact = enemy.Spellbook.SpellQ;
+                if (true)
+                {
+                    foreach (var ally in allies)
+                    {
+                        if (IsFacing(enemy, ally) && enemy.Distance2D(ally) <= 200)
+                        {
+                            if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600 && pact.Cooldown <= 7 && pact.Cooldown > 3)
+                            {
+                                halberd.UseAbility(enemy);
+                                Utils.Sleep(5000, "halberd");
+                            }
+                            if (medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") && _source.Distance2D(ally) <= 1000)
+                            {
+                                medallion.UseAbility(ally);
+                                Utils.Sleep(1000, "solar");
+                            }
+                            if (pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe") && _source.Distance2D(ally) <= 900)
+                            {
+                                pipe.UseAbility();
+                                Utils.Sleep(5000, "pipe");
+                            }
+                            break;
+                        }
+                    }
+
+                    if (IsFacing(enemy, _source) && enemy.Distance2D(_source) <= 200)
+                    {
+                        if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                        {
+                            bladeMail.UseAbility();
+                            Utils.Sleep(5000, "blademail");
+                        }
+                        if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600 && pact.Cooldown <= 7 && pact.Cooldown > 3)
+                        {
+                            halberd.UseAbility(enemy);
+                            Utils.Sleep(5000, "halberd");
+                        }
+                    }
+                }                
+            }
+        }
+
+        //Against Slark go BladeMail, SolarCrest, Halberd
+        private static void dealWithDrow(IEnumerable<Hero> allies, Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger)
+            {                
+                foreach (var ally in allies)
+                {
+                    if (IsFacing(enemy, ally) && enemy.Distance2D(ally) <= 1000)
+                    {
+                        if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600)
+                        {
+                            halberd.UseAbility(enemy);
+                            Utils.Sleep(5000, "halberd");
+                        }
+                        if (medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") && _source.Distance2D(ally) <= 1000)
+                        {
+                            medallion.UseAbility(ally);
+                            Utils.Sleep(1000, "solar");
+                        }                        
+                        break;
+                    }
+                }
+
+                if (IsFacing(enemy, _source) && enemy.Distance2D(_source) <= 1000)
+                {
+                    if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                    {
+                        bladeMail.UseAbility();
+                        Utils.Sleep(4500, "blademail");
+                    }
+                    if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600 && Utils.SleepCheck("blademail"))
+                    {
+                        halberd.UseAbility(enemy);
+                        Utils.Sleep(5000, "halberd");
+                    }
+                }
+                
+            }
+        }
+
+        //Against Slark go BladeMail, SolarCrest, Halberd
+        private static void dealWithLuna(IEnumerable<Hero> allies, Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Luna)
+            {
+                var ult = enemy.Spellbook.SpellR;
+                if (ult.IsInAbilityPhase && enemy.Distance2D(_source) <= 675)
+                {
+                    if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                    {
+                        bladeMail.UseAbility();
+                        Utils.Sleep(4500, "blademail");
+                    }
+                    if (pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe"))
+                    {
+                        pipe.UseAbility();
+                        Utils.Sleep(5000, "pipe");
+                    }
+                }
+
+            }
+        }
+
         private static bool IsFacing(Hero hero, Hero enemy)
         {
 
