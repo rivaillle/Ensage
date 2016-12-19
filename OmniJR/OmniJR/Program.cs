@@ -21,6 +21,7 @@ namespace SupportSharp
         private static Entity fountain;
         private static bool loaded;
         private static ParticleEffect rangeDisplay;
+        private static Boolean rangeWithAether = false;
         private static double soulRingThreshold = 0.6;
         private static Item Urn,
             Meka,
@@ -81,10 +82,15 @@ namespace SupportSharp
                     new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), Color.LightBlue, FontFlags.DropShadow);
 
                 if (rangeDisplay == null)
-                {
+                {       
                     rangeDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
                     rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
-                    rangeDisplay.SetControlPoint(2, new Vector3(600, 255, 0));
+                    rangeDisplay.SetControlPoint(2, new Vector3(550, 255, 0));
+                }else if(me.HasModifier("modifier_item_aether_lens") && rangeWithAether == false)
+                {
+                    rangeDisplay.SetControlPoint(2, new Vector3(550 + 200, 255, 0));
+                    rangeWithAether = true;
+
                 }
                
             }
@@ -402,6 +408,10 @@ namespace SupportSharp
                         {
                             return true;
                         }
+                    }
+                    else if(enemy.ClassID == ClassID.CDOTA_Unit_Hero_Disruptor && IsFacing(enemy, ally) && enemy.Spellbook.SpellW.IsInAbilityPhase)
+                    {
+                        return true;
                     }
                 }/*
                 foreach (var modifier in ally.Modifiers.ToList())
