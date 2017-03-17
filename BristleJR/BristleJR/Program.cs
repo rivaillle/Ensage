@@ -22,7 +22,7 @@ namespace BristleJR
         private static readonly uint[] Quilldmg = { 20, 40, 60, 80 };
         private static readonly Menu Menu = new Menu("Bristleback", "bristle", true);
         private static double threadsSwitchThreshold = 0.35;
-
+        private static int maxGooStacks = 4;
         private static float scaleX;
         private static float scaleY;
         private static float HpBarSizeX;
@@ -39,7 +39,7 @@ namespace BristleJR
             Game.OnUpdate += Game_OnUpdate;
             Game.OnWndProc += Game_OnWndProc;
             Drawing.OnDraw += Game_OnDraw;
-            Game.PrintMessage("Bristleback Sharp by <font color='#ff1111'>Spyware293</font> Loaded !!", MessageType.LogMessage);
+            Game.PrintMessage("Bristleback Sharp by <font color='#ff1111'>Jirico</font> Loaded !!", MessageType.LogMessage);
             Player.OnExecuteOrder += Player_OnExecuteAction;
             var menu_utama = new Menu("Options", "opsi");
             menu_utama.AddItem(new MenuItem("Quill", "Quill").SetValue(new StringList(new[] { "Max", "Smart", "Disable", "Farm", "Smart and Farm" })));
@@ -144,7 +144,15 @@ namespace BristleJR
             {
                 pipe = _source.FindItem("item_pipe");
             }
-
+            if(_source.Level >= 15 && maxGooStacks == 4)
+            {
+                var talentsGoo = _source.Spellbook.Spells.First(x => x.Name == "special_bonus_unique_bristleback");
+                if (talentsGoo.Level > 0)
+                {
+                    maxGooStacks = 8;
+                }              
+            }
+                        
             if (IsInDanger(_source, _enemy) && _source.Health <= _source.MaximumHealth * 0.35)
             {
                 if (Stick != null && Utils.SleepCheck("Stick") && Stick.CurrentCharges > 0 && Stick.Cooldown > 0)
@@ -242,7 +250,7 @@ namespace BristleJR
                 Console.WriteLine(item.Name);
             }
             */
-            if (Crimson != null || bladeMail != null || halberd != null || medallion != null)
+            if (Crimson != null || bladeMail != null || halberd != null || medallion != null || abyssal != null)
             {
                 var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != _source.ClassID && hero.Team == _source.Team);
                 foreach (var enemy in _enemy)
@@ -253,12 +261,27 @@ namespace BristleJR
                     dealWithSlark(allies, enemy);
                     dealWithDrow(allies, enemy);
                     dealWithLuna(allies, enemy);
-                    if (Crimson != null)
+                    if (Crimson != null || medallion != null)
                     {
-                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && _source.Distance2D(enemy) < 400 && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")) && Utils.SleepCheck("crimson"))
+                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
                         {
-                            Crimson.UseAbility();
-                            Utils.Sleep(4000 + Game.Ping, "crimson");
+                            if (Crimson != null && Utils.SleepCheck("crimson") && _source.Distance2D(enemy) < 400)
+                            {
+                                Crimson.UseAbility();
+                                Utils.Sleep(4000 + Game.Ping, "crimson");
+                            }
+                            if (medallion != null && Utils.SleepCheck("solar") && _source.Distance2D(enemy) > 450)
+                            {
+                                foreach(var ally in allies)
+                                {
+                                    if (_source.Distance2D(ally) <= 1000 && ally.Distance2D(enemy) <= 400)
+                                    {
+                                        medallion.UseAbility(ally);
+                                        Utils.Sleep(4000, "solar");
+                                    }
+                                }
+                            }
+
                             /*
                         foreach(var modifier in enemy.Modifiers.ToList())
                         {
@@ -398,6 +421,14 @@ namespace BristleJR
                             }
 
                         }
+                        
+                    }
+                    if (abyssal != null && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("abyssal") && abyssal.CanBeCasted() &&
+                            (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Treant || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Enigma || enemy.IsChanneling()))
+                    {
+                        abyssal.UseAbility(enemy);
+                        Utils.Sleep(1000, "abyssal");
                     }
                 }
             }
@@ -429,9 +460,9 @@ namespace BristleJR
                         var gooModifier = enemy.FindModifier("modifier_bristleback_viscous_nasal_goo");
                         var gooStack = gooModifier?.StackCount ?? 0;
                         var gooTime = gooModifier?.RemainingTime ?? 0;
-                        if(gooStack < 4 || gooTime < 1)
+                        if(gooStack < maxGooStacks || gooTime < 1 && !_source.IsAttacking())
                         {
-                            if (_source.HasModifier("modifier_item_ultimate_scepter") && _source.Distance2D(enemy) <= 700)
+                            if (_source.HasModifier("modifier_item_ultimate_scepter") && _source.Distance2D(enemy) <= 750)
                             {
                                 Goo.UseAbility();
                             }
@@ -443,8 +474,8 @@ namespace BristleJR
                         }
                        
                     }
-
-                    if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted())
+                    Orbwalking.Orbwalk(enemy, 0, 0, false, true);
+                    if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted() && !_source.IsAttacking() && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark)
                     {
                         var isSafe = true;
                         foreach (var enemyUnit in _enemy)
@@ -463,10 +494,11 @@ namespace BristleJR
                         }
                     }
                     
-                    Orbwalking.Orbwalk(enemy);
+                    
                 }else
                 {
-                    _source.Move(Game.MousePosition);
+                    Orbwalking.Orbwalk(null);
+                    // _source.Move(Game.MousePosition);
                 }
                 if (Quill.CanBeCasted() && Utils.SleepCheck("quill"))
                 {
@@ -880,27 +912,32 @@ namespace BristleJR
                                 medallion.UseAbility(ally);
                                 Utils.Sleep(1000, "solar");
                             }
-                            if (pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe") && _source.Distance2D(ally) <= 900)
-                            {
-                                pipe.UseAbility();
-                                Utils.Sleep(5000, "pipe");
-                            }
                             break;
                         }
                     }
-
-                    if (IsFacing(enemy, _source) && enemy.Distance2D(_source) <= 200)
+                    if (enemy.Distance2D(_source) <= 200)
                     {
-                        if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
-                        {
-                            bladeMail.UseAbility();
-                            Utils.Sleep(5000, "blademail");
+                        if (IsFacing(enemy, _source)){
+                            if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
+                            {
+                                bladeMail.UseAbility();
+                                Utils.Sleep(5000, "blademail");
+                            }
                         }
-                        if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600 && pact.Cooldown <= 7 && pact.Cooldown > 3)
+                        if (halberd != null && halberd.CanBeCasted() && Utils.SleepCheck("halberd") && _source.Distance2D(enemy) <= 600 && pact.Cooldown <= 3.5 && pact.Cooldown > 0.5)
                         {
                             halberd.UseAbility(enemy);
                             Utils.Sleep(5000, "halberd");
                         }
+                        if (abyssal != null && Utils.SleepCheck("abyssal") && abyssal.CanBeCasted() && (pact.Cooldown <= 3.5 || pact.CanBeCasted()))
+                        {
+                            abyssal.UseAbility(enemy);
+                            Utils.Sleep(5000, "abyssal");
+                        }
+                    }
+                    if (chase && medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") &&(pact.Cooldown <= 3.5 && pact.Cooldown > 0.5))
+                    {
+                        medallion.UseAbility(enemy);
                     }
                 }                
             }

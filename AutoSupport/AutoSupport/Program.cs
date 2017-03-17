@@ -5,21 +5,25 @@ using Ensage;
 using Ensage.Common;
 using Ensage.Common.Extensions;
 using SharpDX;
+using System.Collections.Generic;
 
 namespace SupportSharp
 {
     internal class Program
     {
         private const Key toggleKey = Key.T;
-        private const Key orbwalkKey = Key.Space;
+        private const Key offensiveKey = Key.D;
         private const Key saveSelfKey = Key.Y;
         private static Hero me;
         private static Ability misticAbility;
+        private static double glimmerThreshold = 0.6;
         private static double[] misticDamagePerLevel = new double[] { 100, 150, 200, 250 };
         private static Entity fountain;
         private static bool loaded;
         private static ParticleEffect rangeDisplay;
         private static Boolean rangeWithAether = false;
+        private static ClassID medallionClassId = 0;
+        private static ClassID enemyToHarass = 0;
 
         private static Item Urn,
             Meka,
@@ -42,8 +46,11 @@ namespace SupportSharp
         private static Hero target;
         private static bool supportActive;
         private static bool includeSaveSelf;
+        private static bool offensiveMode;
         private static bool shouldCastLotusOrb;
         private static bool shouldCastGlimmerCape;
+        private static IEnumerable<Hero> enemies;
+        private static IEnumerable<Hero> allies;
 
         private static void Main(string[] args)
         {
@@ -68,7 +75,7 @@ namespace SupportSharp
             includeSaveSelf = false;
             shouldCastLotusOrb = false;
             shouldCastGlimmerCape = false;
-
+            Eul = null;
             misticAbility = null;
         }
 
@@ -77,10 +84,12 @@ namespace SupportSharp
             if (loaded)
             {
                 var mode = supportActive ? "ON" : "OFF";
-                var orbwalkMode = Game.IsKeyDown(orbwalkKey) ? "ON" : "OFF";
+                var behaviorMode = offensiveMode ? "Offensive" : "Defensive";              
                 var includeSelfMode = includeSaveSelf ? "ON" : "OFF";
-                Drawing.DrawText("Auto Support is: " + mode + ". Hotkey (Toggle): " + toggleKey + "",
-                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), Color.LightBlue, FontFlags.DropShadow);
+                Drawing.DrawText("Auto Support is: " + mode + ". Hotkey (Toggle): " + toggleKey,
+                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), (supportActive ? Color.LightBlue : Color.Red), FontFlags.DropShadow);
+                Drawing.DrawText("Behavior is: " + behaviorMode + ". Hotkey (Toggle): " + offensiveKey,
+                    new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 10 / 100), new Vector2(24), (offensiveMode ? Color.Red : Color.LightBlue), FontFlags.DropShadow);
 
                 if (rangeDisplay == null)
                 {
@@ -90,7 +99,7 @@ namespace SupportSharp
                 }
                 else if (me.HasModifier("modifier_item_aether_lens") && rangeWithAether == false)
                 {
-                    Console.WriteLine("hohoho");
+                    Console.WriteLine("aether");
                     rangeDisplay.SetControlPoint(2, new Vector3(550 + 220, 255, 0));
                     rangeDisplay.Restart();
                     rangeWithAether = true;
@@ -144,6 +153,7 @@ namespace SupportSharp
             Stick = me.FindItem("item_magic_stick");
             Wand = me.FindItem("item_magic_wand");
             QuellingBlade = me.FindItem("item_quelling_blade");
+            Eul = me.FindItem("item_cyclone");
             if (QuellingBlade == null)
             {
                 QuellingBlade = me.FindItem("item_iron_talon");
@@ -156,7 +166,7 @@ namespace SupportSharp
             needMeka = null;
             shouldCastLotusOrb = false;
             shouldCastGlimmerCape = false;
-
+            bool dangerousSpell = false;
             if (!Game.IsChatOpen)
             {
                 if (Game.IsKeyDown(toggleKey) && Utils.SleepCheck("togglingoption"))
@@ -184,11 +194,29 @@ namespace SupportSharp
                     }
                     Utils.Sleep(100 + Game.Ping, "togglingoption");
                 }
+                if (Game.IsKeyDown(offensiveKey) && Utils.SleepCheck("togglingoption"))
+                {
+                    if (!offensiveMode)
+                    {
+                        offensiveMode = true;
+                    }
+                    else
+                    {
+                        offensiveMode = false;
+                    }
+                    Utils.Sleep(200, "togglingoption");
+                }
             }
 
             if (supportActive && me.IsAlive)
             {
-                if(IsInDanger(me) && me.Health <= me.MaximumHealth * 0.4 )
+                if (me.HasModifier("modifier_silver_edge_debuff") && Utils.SleepCheck("ult") && me.Health < me.MaximumHealth * 0.75)
+                {
+                    me.Spellbook.SpellR.UseAbility();
+                    Utils.Sleep(6000, "ult");
+                }
+
+                if (IsInDanger(me) && me.Health <= me.MaximumHealth * 0.4 )
                 {
                     if(Stick != null && Utils.SleepCheck("Stick") && Stick.CurrentCharges > 0 && Stick.Cooldown > 0)
                     {
@@ -210,38 +238,80 @@ namespace SupportSharp
                 var extraRange = 0;
                 if (me.HasModifier("modifier_item_aether_lens"))
                 {
-                    extraRange = 200;
+                    extraRange = 220;
                 }
-
-                var myEnemyList =
+                enemies =
                                     ObjectManager.GetEntitiesFast<Hero>()
                                         .Where(
                                             x =>
                                                 x.Team != me.Team && !x.IsIllusion && x.IsAlive &&
-                                                me.Distance2D(x) <= 800 + extraRange)
+                                                me.Distance2D(x) <= 1050)
                                         .ToList();
 
-                if (myEnemyList.Any())
-                {
-                    foreach (var enemy in myEnemyList)
-                    {
-                        
-                        var enemyResistence = enemy.MagicDamageResist;
-                        double totalDamage = misticDamage - misticDamage * enemyResistence;
-                        if (me.HasModifier("modifier_item_aether_lens"))
-                        {
-                            totalDamage += totalDamage * 0.05;
-                        }
-                        totalDamage += totalDamage * (me.Intelligence % 16) / 100;
-                        if (totalDamage >= (enemy.Health + enemy.HealthRegeneration * 1))
-                        {
-                            CastHeal(misticAbility, enemy);
-                        }
-                        if (enemy.IsLinkensProtected())
-                        {
-                            CastHeal(misticAbility, enemy);
-                        }   
+                allies = ObjectManager.GetEntitiesFast<Hero>()
+                               .Where(
+                                   x =>
+                                       x.Team == me.Team && (x.ClassID != me.ClassID) && !x.IsIllusion && x.IsAlive &&
+                                       me.Distance2D(x) <= 1050);
 
+                if (enemies.Any())
+                {
+                    foreach (var enemy in enemies)
+                    {
+                        if(me.Distance2D(enemy) <= 800 + extraRange)
+                        {
+                            var enemyResistence = enemy.MagicDamageResist;
+                            double totalDamage = misticDamage - misticDamage * enemyResistence;
+                            if (me.HasModifier("modifier_item_aether_lens"))
+                            {
+                                totalDamage += totalDamage * 0.05;
+                            }
+                            totalDamage += totalDamage * (me.Intelligence % 16) / 100;
+                            if (totalDamage >= (enemy.Health + enemy.HealthRegeneration * 1))
+                            {
+                                CastHeal(misticAbility, enemy);
+                            }
+                            if (enemy.IsLinkensProtected())
+                            {
+                                CastHeal(misticAbility, enemy);
+                            }                            
+                            if (Eul != null && Utils.SleepCheck("cyclone") && Eul.CanBeCasted())
+                            {
+                                var blink = enemy.FindItem("item_blink");
+                                if (blink != null && blink.Cooldown > 8)
+                                {
+                                    Eul.UseAbility(enemy);
+                                    Utils.Sleep(1000, "cyclone");
+                                }
+                                else if (enemy.IsChanneling())
+                                {
+                                    Eul.UseAbility(enemy);
+                                    Utils.Sleep(1000, "cyclone");
+                                }else if (checkSlarkConditions(enemy) && enemy.HasModifier("modifier_slark_pounce"))
+                                {
+                                    Console.WriteLine("POUNCE DETECTED");
+                                    var allies =
+                                    ObjectManager.GetEntitiesFast<Hero>()
+                                        .Where(
+                                            x =>
+                                                x.Team == me.Team && !x.IsIllusion && x.IsAlive && enemy.Distance2D(x) > 300 && enemy.Distance2D(x) < 900)
+                                        .ToList();
+                                    if (allies.Any())
+                                    {
+                                        foreach (var ally in allies)
+                                        {
+                                            if (IsFacing(enemy, ally))
+                                            {
+                                                Eul.UseAbility(enemy);
+                                                Utils.Sleep(1000, "cyclone");
+                                            }
+                                        }
+                                    }
+                                    
+                                    
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -251,14 +321,35 @@ namespace SupportSharp
                     switch (me.ClassID)
                     {
                         case ClassID.CDOTA_Unit_Hero_Abaddon:
+                            var healSpell = me.Spellbook.SpellQ;
                             if (me.HasModifier("modifier_item_aether_lens"))
                             {
                                 addedRange += 220;
                             }
-                            Save(me, me.Spellbook.SpellW, 1000, me.Spellbook.SpellW.CastRange + addedRange);
-                            Heal(me, me.Spellbook.SpellQ, new float[] { 100, 150, 200, 250 },
-                                800 + addedRange);                           
-                            break;                        
+                            Save(me, me.Spellbook.SpellW, 580, me.Spellbook.SpellW.CastRange + addedRange);
+                            if (!offensiveMode)
+                            {
+                                Heal(me, healSpell, new float[] { 100, 150, 200, 250 },
+                                800 + addedRange);
+                                AuxItems(me);
+                                ShopItems(me);
+                            }
+                                                     
+                            if(offensiveMode)
+                            {
+                                var closestEnemy = me.ClosestToMouseTarget(700);
+                                if(closestEnemy != null && Utils.SleepCheck("solar") && Utils.SleepCheck("saveduration") && me.Distance2D(closestEnemy) <= 1000 && Medallion != null && Medallion.CanBeCasted())
+                                {
+                                    Medallion.UseAbility(closestEnemy);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                                if (closestEnemy != null && healSpell.CanBeCasted() && me.Distance2D(closestEnemy) <= 800 + extraRange)
+                                {
+                                    CastHeal(healSpell, closestEnemy);
+
+                                }
+                            }
+                            break;
                     }
                 }
             }
@@ -281,39 +372,58 @@ namespace SupportSharp
 
         private static void Save(Hero self, Ability saveSpell, float castTime = 800, uint castRange = 0)
         {
-            if (saveSpell != null && saveSpell.CanBeCasted())
+            
+                    long auxCastRange = 0;
+            if(self.IsAlive && !self.IsChanneling() && !self.IsInvisible())
             {
-                if (self.IsAlive && !self.IsChanneling() &&
-                    (!self.IsInvisible()))
+                if (GlimmerCape != null && Utils.SleepCheck("glimmer") && GlimmerCape.CanBeCasted())
                 {
+                    auxCastRange = 1000;
+                }
+                else if (saveSpell != null && saveSpell.CanBeCasted() && Utils.SleepCheck("saveduration"))
+                {
+                    auxCastRange = castRange;
+                }
+                else
+                {
+                    return;
+                }
                     var allies =
                         ObjectManager.GetEntitiesFast<Hero>()
                             .Where(
                                 x =>
-                                    x.Team == self.Team && IsInDanger2(x) && !x.IsIllusion && x.IsAlive)
+                                    x.Team == self.Team && self.ClassID != x.ClassID && !x.IsIllusion && x.IsAlive && self.Distance2D(x) <= auxCastRange)
                             .ToList();
-                    
+                    var isInDanger = false;
                     if (allies.Any())
                     {
                         foreach (var ally in allies)
                         {
-                            if (Utils.SleepCheck("armor") && Utils.SleepCheck("saveduration") && self.Distance2D(ally) <= 1000 && Medallion != null && Medallion.CanBeCasted())
-                            {
-                                Medallion.UseAbility(ally);
-                                Utils.Sleep(1000, "armor");
-                            }
-
-                            if (Utils.SleepCheck("saveduration") && self.Distance2D(ally) <= castRange)
+                            isInDanger = IsInDanger2(ally);                          
+                            if (saveSpell.CanBeCasted() && Utils.SleepCheck("saveduration") && self.Distance2D(ally) <= castRange && isInDanger)
                             {
                                 saveSpell.UseAbility(ally);
                                 Utils.Sleep(castTime + Game.Ping, "saveduration");
                             }
-                            
+
+                            else if (GlimmerCape != null && Utils.SleepCheck("glimmer") && Utils.SleepCheck("saveduration_" + ally.Name) && GlimmerCape.CanBeCasted() && !ally.IsMagicImmune() && !ally.IsAttacking() && ally.Health <= ally.MaximumHealth * glimmerThreshold)
+                            {
+                                foreach (var enemy in enemies)
+                                {
+                                     if(IsFacing(ally, enemy))
+                                     {
+                                        return;
+                                     }
+                                }
+                                GlimmerCape.UseAbility(ally);
+                                Utils.Sleep(1000, "glimmer");
+                            }
+
                         }
                     }
                     
                 }
-            }
+            
         }
 
         private static void Heal(Hero self, Ability healSpell, float[] amount, uint range)
@@ -400,7 +510,7 @@ namespace SupportSharp
                     "modifier_batrider_flaming_lasso", "modifier_sniper_assassinate", "modifier_pudge_dismember",
                     "modifier_enigma_black_hole_pull", "modifier_disruptor_static_storm", "modifier_sand_king_epicenter",
                     "modifier_bloodseeker_rupture", "modifier_dual_breath_burn", "modifier_jakiro_liquid_fire_burn",
-                    "modifier_axe_battle_hunger", "modifier_viper_corrosive_skin", "modifier_viper_poison_attack",
+                    "modifier_axe_battle_hunger", "modifier_viper_poison_attack",
                     "modifier_viper_viper_strike", "modifier_bounty_hunter_track"
                 };
                 foreach (var buff in buffs)
@@ -483,9 +593,9 @@ namespace SupportSharp
                     "modifier_batrider_flaming_lasso", "modifier_sniper_assassinate", "modifier_pudge_dismember",
                     "modifier_enigma_black_hole_pull", "modifier_disruptor_static_storm", "modifier_sand_king_epicenter",
                     "modifier_bloodseeker_rupture", "modifier_dual_breath_burn", "modifier_jakiro_liquid_fire_burn",
-                    "modifier_axe_battle_hunger", "modifier_viper_corrosive_skin", "modifier_viper_poison_attack",
+                    "modifier_axe_battle_hunger", "modifier_viper_poison_attack",
                     "modifier_viper_viper_strike", "modifier_bounty_hunter_track", "modifier_life_stealer_open_wounds",
-                    "modifier_phantom_assassin_stiflingdagger", "modifier_phantom_lancer_spirit_lance"
+                    "modifier_phantom_assassin_stiflingdagger", "modifier_ember_spirit_searing_chains", "modifier_phantom_lancer_spirit_lance", "modifier_treant_leech_seed"
                 };
                 foreach (var buff in buffs)
                 {
@@ -544,6 +654,96 @@ namespace SupportSharp
             return false;
         }
 
+        private static void ShopItems(Hero me)
+        {
+            var ult = me.Spellbook.SpellR;
+            if (!ult.CanBeCasted() && Utils.SleepCheck("shop") && IsInDanger2(me))
+            {
+                var itemsToBuy = Player.QuickBuyItems.OrderByDescending(x => Ability.GetAbilityDataByID((uint)x).Cost);
+                itemsToBuy.ForEach(x => Player.BuyItem(me, (uint)x));
+                Utils.Sleep(1000, "shop");
+            }
+
+        }
+
+        private static void AuxItems(Hero self)
+        {
+            if (!self.IsInvisible() && self.CanCast())
+            {
+
+                if (Medallion != null && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
+                {
+                    foreach (var enemy in enemies)
+                    {
+                        if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
+                        {
+                            foreach (var ally in allies)
+                            {
+                                if (IsFacing(enemy, ally))
+                                {
+                                    Medallion.UseAbility(ally);
+                                    Utils.Sleep(1000, "solar");
+                                }
+
+
+                            }
+                        }
+                    }
+                    if (Utils.SleepCheck("solar") && Medallion.CanBeCasted())
+                    {
+                        foreach (var ally in allies)
+                        {
+                            if (isCarry(ally) && ally.IsAttacking())
+                            {
+                                foreach (var enemy in enemies)
+                                {
+                                    if (IsFacing(ally, enemy))
+                                    {
+                                        Medallion.UseAbility(enemy);
+                                        Utils.Sleep(1000, "solar");
+                                    }
+
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (GlimmerCape != null && Utils.SleepCheck("glimmer") && GlimmerCape.CanBeCasted())
+                {
+                    foreach (var enemy in enemies)
+                    {
+                        if (isNuker(enemy) && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
+                        {
+                            if (IsFacing(enemy, self) && enemy.Distance2D(self) <= 1000 && !self.IsAttacking())
+                            {
+                                GlimmerCape.UseAbility(self);
+                                Utils.Sleep(1000, "glimmer");
+                            }
+                            else if (allies.Any())
+                            {
+                                foreach (var ally in allies)
+                                {
+                                    if (IsFacing(enemy, ally) && !ally.IsMagicImmune() && enemy.Distance2D(ally) <= 1000 && !ally.IsAttacking())
+                                    {
+                                        GlimmerCape.UseAbility(ally);
+                                        Utils.Sleep(1000, "glimmer");
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+
+                }
+
+            }
+
+
+        }
+
         private static bool Support(ClassID hero)
         {
             if (hero == ClassID.CDOTA_Unit_Hero_Abaddon)
@@ -553,7 +753,7 @@ namespace SupportSharp
             return false;
         }
 
-        private static bool IsFacing(Hero hero, Hero enemy)
+        private static bool IsFacing(Hero hero, Hero enemy, double maxAngle = 0.1)
         {
 
             float deltaY = hero.Position.Y - enemy.Position.Y;
@@ -562,17 +762,61 @@ namespace SupportSharp
 
             float n1 = (float)Math.Sin(hero.RotationRad - angle);
             float n2 = (float)Math.Cos(hero.RotationRad - angle);
-
-            return (Math.PI - Math.Abs(Math.Atan2(n1, n2))) < 0.2;
+            Console.WriteLine(Math.PI - Math.Abs(Math.Atan2(n1, n2)));
+            return (Math.PI - Math.Abs(Math.Atan2(n1, n2))) < 0.1;
         }
 
         private static bool CanGoInvis(Hero ally) {
-            if (ally.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz || ally.ClassID == ClassID.CDOTA_Unit_Hero_Riki || ally.ClassID == ClassID.CDOTA_Unit_Hero_BountyHunter
+            if (ally.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz || ally.ClassID == ClassID.CDOTA_Unit_Hero_Treant || ally.ClassID == ClassID.CDOTA_Unit_Hero_Riki || ally.ClassID == ClassID.CDOTA_Unit_Hero_BountyHunter
                     || ally.HasModifier("modifier_item_invisibility_edge_windwalk") || ally.HasModifier("modifier_item_silver_edge_windwalk"))
             {
                 return true;
             }
             return false;
         }
-}
+
+        private static bool isCarry(Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DragonKnight || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander
+                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassID == ClassID.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Ursa || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Weaver || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner
+                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Riki || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Terrorblade || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar || enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin
+                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut || enemy.ClassID == ClassID.CDOTA_Unit_Hero_FacelessVoid)
+            {
+                return true;
+            }
+            return false;
+        }
+        private static bool isNuker(Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Morphling || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Necrolyte || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Invoker
+                || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Batrider || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut || enemy.ClassID == ClassID.CDOTA_Unit_Hero_StormSpirit)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        //Against Slark go BladeMail, SolarCrest, Halberd
+        private static bool checkSlarkConditions(Hero enemy)
+        {
+            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark)
+            {
+
+                var pact = enemy.Spellbook.SpellQ;
+                
+                if (pact.Cooldown <= 7 && pact.Cooldown > 3 || pact.CanBeCasted())
+                {
+                    return true;
+                }else
+                {
+                    return false;
+                }
+
+            }else
+            {
+                return false;
+            }
+        }
+    }
 }
