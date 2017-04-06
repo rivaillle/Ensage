@@ -10,7 +10,7 @@ using static AutoGhost.AutoGhost;
 
 namespace BadassVenom
 {
-    class Program
+    internal class Program
     {
         private static uint[] PlagueWardDamage = { 15, 24, 33, 42 };
         private static Item Veil,
@@ -36,7 +36,7 @@ namespace BadassVenom
         private static bool autoPlague;
         private static Hero me;
 
-        private static void Main()
+        static void Main(string[] args)
         {
             Game.OnUpdate += Game_OnUpdate;
             Game.OnWndProc += Game_OnWndProc;
@@ -73,7 +73,7 @@ namespace BadassVenom
             }
         }
 
-        private static void Game_OnUpdate(EventArgs args)
+        public static void Game_OnUpdate(EventArgs args)
         {
             if (!Game.IsInGame)
                 return;
