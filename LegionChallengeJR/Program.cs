@@ -19,6 +19,8 @@ namespace ChallengeAccepted
         private static Ability Duel, Heal, Odds;
         private static Item blink, armlet, blademail, bkb, abyssal, mjollnir, halberd, medallion, madness, urn, satanic, solar, dust, sentry, mango, arcane, buckler, crimson, lotusorb, cheese, magistick, magicwand, soulring, force, cyclone, vyse, atos, difusal;
         private static Hero me, target;
+        private static ParticleEffect rangeDisplay;
+        private static bool bkbActive = true;
         private static readonly Dictionary<string, bool> duel_items = new Dictionary<string, bool>
             {
                 {"item_blink",true},
@@ -104,18 +106,19 @@ namespace ChallengeAccepted
         {
             if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame)
                 return;
-            me = ObjectMgr.LocalHero;
+            me = ObjectManager.LocalHero;
             if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Legion_Commander)
                 return;
             if (Game.IsKeyDown(Menu.Item("Black King Bar Toggle").GetValue<KeyBind>().Key) && !Game.IsChatOpen && Utils.SleepCheck("BKBTOGGLE"))
             {
+                bkbActive = !bkbActive;
                 duel_items3["item_black_king_bar"] = !Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled("item_black_king_bar");
-                Utils.Sleep(750, "BKBTOGGLE");
+                Utils.Sleep(300, "BKBTOGGLE");
             }
             if (Game.IsKeyDown(Menu.Item("DUEL!").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
             {
                 FindItems();
-                target = me.ClosestToMouseTarget(1000);
+                target = me.ClosestToMouseTarget(200);
                 //if (Utils.SleepCheck("console"))
                 //{
                 //    Console.WriteLine("==================================================================");
@@ -158,7 +161,7 @@ namespace ChallengeAccepted
                                         madness.UseAbility();
                                     if (Heal != null && Heal.Level > 0 && Heal.Cooldown <= 0 && Menu.Item("Skills").GetValue<AbilityToggler>().IsEnabled(Heal.Name) && !me.IsMagicImmune() && me.Mana - Heal.ManaCost >= 75)
                                         Heal.UseAbility(me);
-                                    if (bkb != null && bkb.Cooldown <= 0 && Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled(bkb.Name) && (!Heal.CanBeCasted() || Heal == null || !Menu.Item("Skills").GetValue<AbilityToggler>().IsEnabled(Heal.Name)))
+                                    if (bkb != null && bkb.Cooldown <= 0 && bkbActive && (!Heal.CanBeCasted() || Heal == null || !Menu.Item("Skills").GetValue<AbilityToggler>().IsEnabled(Heal.Name)))
                                         bkb.UseAbility();
                                     if (blink != null && blink.Cooldown <= 0 && me.Distance2D(target) <= 1300 && me.Distance2D(target) >= 200 && Menu.Item("Duel Items").GetValue<AbilityToggler>().IsEnabled(blink.Name))
                                         blink.UseAbility(me.Distance2D(target.NetworkPosition) < 1200 ? target.NetworkPosition : new Vector3(me.NetworkPosition.X + 1150 * (float)Math.Cos(me.NetworkPosition.ToVector2().FindAngleBetween(target.NetworkPosition.ToVector2(), true)), me.NetworkPosition.Y + 1150 * (float)Math.Sin(me.NetworkPosition.ToVector2().FindAngleBetween(target.NetworkPosition.ToVector2(), true)), 100), false);
@@ -192,6 +195,7 @@ namespace ChallengeAccepted
                                     {
                                         halberd.UseAbility(target);
                                         Utils.Sleep(100, "halberdLinkens");
+                                        Utils.Sleep(100, "linken_triggered");                                        
                                     }
                                     else if (vyse != null && vyse.CanBeCasted() && Utils.SleepCheck("vyseLinkens") && Menu.Item("Pop Linkens: ").GetValue<AbilityToggler>().IsEnabled(vyse.Name) && me.Mana - vyse.ManaCost >= 75)
                                     {
@@ -266,7 +270,7 @@ namespace ChallengeAccepted
                                         Heal.UseAbility(me);
                                     else
                                         elsecount += 1;
-                                    if (bkb != null && bkb.Cooldown <= 0 && Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled(bkb.Name) && (!Heal.CanBeCasted() || Heal == null))
+                                    if (bkb != null && bkb.Cooldown <= 0 && bkbActive && (!Heal.CanBeCasted() || Heal == null))
                                         bkb.UseAbility();
                                     else
                                         elsecount += 1;
@@ -290,7 +294,7 @@ namespace ChallengeAccepted
                                         medallion.UseAbility(target);
                                     else
                                         elsecount += 1;
-                                    if (Duel != null && Duel.Cooldown <= 0 && !target.IsLinkensProtected() && !target.Modifiers.Any(x => x.Name == "modifier_abaddon_borrowed_time") && Utils.SleepCheck("Duel") && elsecount == 16)
+                                    if (Duel != null && Duel.Cooldown <= 0 && !target.IsLinkensProtected() && !target.Modifiers.Any(x => x.Name == "modifier_abaddon_borrowed_time") && Utils.SleepCheck("Duel") && Utils.SleepCheck("linken_triggered"))
                                     {
                                         Duel.UseAbility(target);
                                         Utils.Sleep(100, "Duel");
@@ -497,15 +501,25 @@ namespace ChallengeAccepted
                 return;
             if (me.ClassID != ClassID.CDOTA_Unit_Hero_Legion_Commander)
                 return;
-            target = me.ClosestToMouseTarget(50000);
+            target = me.ClosestToMouseTarget(200);
             if (target != null)
             {
                 Vector2 target_health_bar = HeroPositionOnScreen(target);
                 Drawing.DrawText("Marked for Death", target_health_bar, new Vector2(15, 200), me.Distance2D(target) < 1200 ? Color.Red : Color.Azure, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
             }
             if (!Utils.SleepCheck("BKBTOGGLE"))
-                Drawing.DrawText(Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled("item_black_king_bar") == true ? "ON" : "OFF", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2), new Vector2(30, 200), Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled("item_black_king_bar") == true ? Color.LimeGreen : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+                Drawing.DrawText(bkbActive ? "ON" : "OFF", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2), new Vector2(30, 200), bkbActive == true ? Color.LimeGreen : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 
+            //var isBkbEnabled = bkb != null && Menu.Item("Duel Items3").GetValue<AbilityToggler>().IsEnabled(bkb.Name);
+            Drawing.DrawText("BKB is: " + (bkbActive ? "ON" : "OFF") + ". Hotkey (Toggle): F",
+                new Vector2(Drawing.Width * 5 / 100, Drawing.Height * 4 / 100), new Vector2(24), (bkbActive ? Color.LightGreen : Color.Red), FontFlags.DropShadow);
+
+            if (rangeDisplay == null)
+            {
+                rangeDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
+                rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
+                rangeDisplay.SetControlPoint(2, new Vector3(1300, 255, 0));
+            }
         }
         static Vector2 HeroPositionOnScreen(Hero x)
         {

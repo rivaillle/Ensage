@@ -28,6 +28,7 @@ namespace AutoGhost
                     if(IsFacing(destiny, enemy))
                     {
                         isFacing = true;
+                        return false;
                     }
                 }
                 if (isFacing)
@@ -78,7 +79,6 @@ namespace AutoGhost
                     }
                     else if (dodge == true && (enemy.ClassID != ClassID.CDOTA_Unit_Hero_Juggernaut || Utils.SleepCheck("omnislash_dodged_" + destiny.ClassID)) && IsFacing(enemy, destiny) && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
                     {
-                        Console.WriteLine("SPECIAL dodge jugg with" + ghost.Name);
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
                         return true;

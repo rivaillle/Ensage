@@ -34,22 +34,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ensage">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\PlaySharp\References\Ensage.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.Common">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\PlaySharp\References\Ensage.Common.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.Common.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.Menu">
       <HintPath>C:\Program Files (x86)\PlaySharp\System\Ensage.Menu.dll</HintPath>
     </Reference>
     <Reference Include="PlaySharp.Service">
-      <HintPath>C:\Program Files (x86)\PlaySharp\System\PlaySharp.Service.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\PlaySharp.Service.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\PlaySharp\References\SharpDX.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct3D9">
-      <HintPath>C:\Program Files (x86)\PlaySharp\System\SharpDX.Direct3D9.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Direct3D9.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

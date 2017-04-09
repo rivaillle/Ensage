@@ -237,14 +237,14 @@ namespace Auto_Disable
                         }
                         else if (Menu.Item("onlyoninitiators").GetValue<StringList>().SelectedIndex == (int)DisableType.All)
                         {
-                            UseDisableStageOne(v, enumerable, null, false, false, me, i);
+                            //UseDisableStageOne(v, enumerable, null, false, false, me, i);
                         }
                         else if (Initiators.TryGetValue(v.ClassID, out spellString))
                         {
                             var initSpell = v.FindSpell(spellString);
                             if (initSpell != null && initSpell.Cooldown != 0)
                             {
-                                UseDisableStageOne(v, enumerable, null, false, true, me, i);
+                                //UseDisableStageOne(v, enumerable, null, false, true, me, i);
                             }
                         }
                     }
@@ -650,8 +650,7 @@ namespace Auto_Disable
                             (x.Name == "item_sheepstick" || x.Name == "item_orchid" || x.Name == "item_bloodthorn" ||
                              x.Name == "item_abyssal_blade" ||
                              x.Name == "item_ethereal_blade" ||
-                             x.Name == "item_rod_of_atos" ||                            
-                             x.Name == "item_cyclone") &&
+                             x.Name == "item_rod_of_atos") &&
                             ExtraSubMenu[i, 0].Item("SelectedItems" + me.Name + target.Name)
                                 .GetValue<AbilityToggler>()
                                 .IsEnabled(x.Name));

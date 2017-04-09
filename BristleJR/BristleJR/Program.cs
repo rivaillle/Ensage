@@ -7,6 +7,7 @@ using Ensage.Common.Menu;
 using SharpDX;
 using System.Windows.Input;
 using System.Collections.Generic;
+using static AutoGhost.AutoGhost;
 
 namespace BristleJR
 {
@@ -31,7 +32,7 @@ namespace BristleJR
 
         static void Main(string[] args)
         {
-            
+
             scaleX = ((float)Drawing.Width / 1366);
             scaleY = ((float)Drawing.Height / 768);
             HpBarSizeX = HUDInfo.GetHPBarSizeX();
@@ -81,17 +82,18 @@ namespace BristleJR
             {
                 return;
             }
-            if (_source == null ||_source.ClassID != ClassID.CDOTA_Unit_Hero_Bristleback)
+            if (_source == null || _source.ClassID != ClassID.CDOTA_Unit_Hero_Bristleback)
             {
                 return;
             }
-            
+
             var _enemy = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.IsVisible && hero.Team != _source.Team);
             var _creep = ObjectManager.GetEntitiesFast<Creep>().Where(x => (x.ClassID == ClassID.CDOTA_BaseNPC_Creep_Lane || x.ClassID == ClassID.CDOTA_BaseNPC_Creep_Siege) && x.IsAlive && x.IsSpawned && x.IsVisible).ToList();
-            
+
             if (Quill == null)
             {
                 Quill = _source.Spellbook.Spell2;
+                Console.WriteLine(Quill.CastRange);
             }
             if (Goo == null)
             {
@@ -109,50 +111,50 @@ namespace BristleJR
             {
                 atos = _source.FindItem("item_rod_of_atos");
             }
-            
+
             medallion = _source.FindItem("item_medallion_of_courage");
             if (medallion == null)
             {
-                medallion =_source.FindItem("item_solar_crest");
+                medallion = _source.FindItem("item_solar_crest");
             }
 
             if (halberd == null)
             {
                 halberd = _source.FindItem("item_heavens_halberd");
             }
-            if(threads == null)
+            if (threads == null)
             {
                 threads = (Ensage.Items.PowerTreads)_source.FindItem("item_power_treads");
             }
-                       
-            Stick = _source.FindItem("item_magic_stick");            
+
+            Stick = _source.FindItem("item_magic_stick");
             Wand = _source.FindItem("item_magic_wand");
-            
-            if(Crimson == null)
+
+            if (Crimson == null)
             {
                 Crimson = _source.FindItem("item_crimson_guard");
             }
-            
+
             Quelling = _source.FindItem("item_quelling_blade");
-            if(Quelling == null)
+            if (Quelling == null)
             {
                 Quelling = _source.FindItem("item_iron_talon");
             }
             bladeMail = _source.FindItem("item_blade_mail");
             pipe = _source.FindItem("item_hood_of_defiance");
-            if(pipe == null)
+            if (pipe == null)
             {
                 pipe = _source.FindItem("item_pipe");
             }
-            if(_source.Level >= 15 && maxGooStacks == 4)
+            if (_source.Level >= 15 && maxGooStacks == 4)
             {
                 var talentsGoo = _source.Spellbook.Spells.First(x => x.Name == "special_bonus_unique_bristleback");
                 if (talentsGoo.Level > 0)
                 {
                     maxGooStacks = 8;
-                }              
+                }
             }
-                        
+
             if (IsInDanger(_source, _enemy) && _source.Health <= _source.MaximumHealth * 0.35)
             {
                 if (Stick != null && Utils.SleepCheck("Stick") && Stick.CurrentCharges > 0 && Stick.Cooldown > 0)
@@ -167,7 +169,7 @@ namespace BristleJR
                 }
 
             }
-
+            useGhost(medallion, _source, _enemy, true, null);
             var selectedIndex = Menu.Item("Quill").GetValue<StringList>().SelectedIndex;
             if (selectedIndex == 3 && Quill.CanBeCasted() && _source.CanCast() && Utils.SleepCheck("quill") && !_source.IsChanneling() && !_source.IsInvisible())
             {
@@ -193,7 +195,7 @@ namespace BristleJR
                 {
                     if (Utils.SleepCheck("quill") && _source.Distance2D(enemy) < Quill.CastRange)
                     {
-                        useAbility(Quill);                        
+                        useAbility(Quill);
                         Utils.Sleep(150 + Game.Ping, "quill");
                     }
                 }
@@ -223,21 +225,34 @@ namespace BristleJR
                 }
 
             }
-            if (trigger && Utils.SleepCheck("quill") && Quill.CanBeCasted() && Menu.Item("enable").GetValue<bool>())
+            if (trigger && Utils.SleepCheck("trigger") && Menu.Item("enable").GetValue<bool>())
             {
-               
-                if(Quelling != null && Utils.SleepCheck("deward") && Quelling.CanBeCasted())
+
+                if ((Quelling != null || medallion != null) && (Quelling.CanBeCasted() || medallion.CanBeCasted()))
                 {
-                    var neutral = ObjectManager.GetEntitiesFast<Creep>().Where(x => x.IsAlive && x.IsSpawned && x.IsVisible && x.Distance2D(_source) <= 450).MaxOrDefault(x => x.Health);
+                    var neutral = ObjectManager.GetEntitiesFast<Creep>().Where(x => x.IsAlive && x.IsSpawned && x.IsVisible && x.Distance2D(_source) <= 600).MaxOrDefault(x => x.Health);
                     if (neutral != null && neutral.Health > _source.DamageAverage && neutral.Health > neutral.MaximumHealth * 0.4)
                     {
-                        Quelling.UseAbility(neutral);
-                        Utils.Sleep(1000, "deward");
+                        if(Quelling.CanBeCasted() && Utils.SleepCheck("deward"))
+                        {
+                            Quelling.UseAbility(neutral);
+                            Utils.Sleep(1000, "deward");
+                        }
+                        if (medallion.CanBeCasted() && Utils.SleepCheck("solar"))
+                        {
+                            medallion.UseAbility(neutral);
+                            Utils.Sleep(4000, "solar");
+                        }
                     }
+                    _source.Attack(neutral);
+                    Utils.Sleep(200, "trigger");
 
                 }
-                useAbility(Quill);
-                Utils.Sleep(150 + Game.Ping, "quill");
+                if (Utils.SleepCheck("quill") && Quill.CanBeCasted())
+                {
+                    useAbility(Quill);
+                    Utils.Sleep(150 + Game.Ping, "quill");
+                }
 
             }
             if (Utils.SleepCheck("threads") && threads != null && threads.ActiveAttribute != Ensage.Attribute.Strength)
@@ -272,7 +287,7 @@ namespace BristleJR
                             }
                             if (medallion != null && Utils.SleepCheck("solar") && _source.Distance2D(enemy) > 450)
                             {
-                                foreach(var ally in allies)
+                                foreach (var ally in allies)
                                 {
                                     if (_source.Distance2D(ally) <= 1000 && ally.Distance2D(enemy) <= 400)
                                     {
@@ -318,7 +333,7 @@ namespace BristleJR
                                 bladeMail.UseAbility();
                                 Utils.Sleep(1000 + Game.Ping, "blademail");
                             }
-                                
+
                         }
                         if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_sven_gods_strength") && IsFacing(enemy, _source))
                         {
@@ -330,23 +345,23 @@ namespace BristleJR
                         {
                             bladeMail.UseAbility();
                             Utils.Sleep(1000 + Game.Ping, "blademail");
-                            if(medallion != null && medallion.CanBeCasted())
+                            if (medallion != null && medallion.CanBeCasted())
                             {
                                 medallion.UseAbility(enemy);
-                                Utils.Sleep(1000, "solar");                                
+                                Utils.Sleep(1000, "solar");
                             }
 
-                        }                        
+                        }
                         else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_slark_shadow_dance_passive_regen") && IsFacing(enemy, _source))
                         {
                             bladeMail.UseAbility();
-                            Utils.Sleep(1000 + Game.Ping, "blademail");                           
+                            Utils.Sleep(1000 + Game.Ping, "blademail");
 
                         }
                     }
-                    if(halberd != null && Utils.SleepCheck("halberd") && halberd.CanBeCasted())
+                    if (halberd != null && Utils.SleepCheck("halberd") && halberd.CanBeCasted())
                     {
-                        
+
                         if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 600 && Utils.SleepCheck("heaven"))
                         {
                             if (_source.Distance2D(enemy) <= 200 && (enemy.Spellbook.SpellR.CanBeCasted()) && IsFacing(enemy, _source))
@@ -377,13 +392,13 @@ namespace BristleJR
                         {
                             foreach (var ally in allies)
                             {
-                                if(ally.HasModifier("modifier_legion_commander_duel"))
+                                if (ally.HasModifier("modifier_legion_commander_duel"))
                                 {
                                     medallion.UseAbility(ally);
                                     Utils.Sleep(1000, "solar");
                                 }
                             }
-                            
+
                         }
                         if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_sven_gods_strength"))
                         {
@@ -421,7 +436,7 @@ namespace BristleJR
                             }
 
                         }
-                        
+
                     }
                     if (abyssal != null && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("abyssal") && abyssal.CanBeCasted() &&
                             (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
@@ -434,12 +449,12 @@ namespace BristleJR
             }
 
             if (chase)
-            {                
+            {
                 var enemy = _source.ClosestToMouseTarget(200);
                 if (enemy == null)
                 {
                     uint currentHealth = 9999;
-                    foreach(var pe in _enemy)
+                    foreach (var pe in _enemy)
                     {
                         if (pe.Health < currentHealth && _source.Distance2D(pe) < 700)
                         {
@@ -460,7 +475,7 @@ namespace BristleJR
                         var gooModifier = enemy.FindModifier("modifier_bristleback_viscous_nasal_goo");
                         var gooStack = gooModifier?.StackCount ?? 0;
                         var gooTime = gooModifier?.RemainingTime ?? 0;
-                        if(gooStack < maxGooStacks || gooTime < 1 && !_source.IsAttacking())
+                        if (gooStack < maxGooStacks || gooTime < 1 && !_source.IsAttacking())
                         {
                             if (_source.HasModifier("modifier_item_ultimate_scepter") && _source.Distance2D(enemy) <= 750)
                             {
@@ -472,7 +487,7 @@ namespace BristleJR
                             }
                             Utils.Sleep(500, "goo");
                         }
-                       
+
                     }
                     Orbwalking.Orbwalk(enemy, 0, 0, false, true);
                     if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted() && !_source.IsAttacking() && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark)
@@ -493,9 +508,10 @@ namespace BristleJR
                             Utils.Sleep(1000, "solar");
                         }
                     }
-                    
-                    
-                }else
+
+
+                }
+                else
                 {
                     Orbwalking.Orbwalk(null);
                     // _source.Move(Game.MousePosition);
@@ -505,11 +521,11 @@ namespace BristleJR
                     useAbility(Quill);
                     Utils.Sleep(500 + Game.Ping, "quill");
                 }
-                
+
 
             }
 
-            if (Quelling != null && Quelling.Cooldown == 0)
+            if (Quelling != null && Quelling.Cooldown == 0 && Utils.SleepCheck("deward"))
             {
                 var wards =
                                         ObjectManager.GetEntitiesFast<Unit>()
@@ -523,7 +539,7 @@ namespace BristleJR
                     Quelling.UseAbility(wards[0]);
                     Utils.Sleep(1000, "deward");
                 }
-            }           
+            }
         }
 
         public static void useAbility(Ability ability)
@@ -537,9 +553,9 @@ namespace BristleJR
 
         public static void setThreads(Hero me, Ensage.Items.PowerTreads powerTreads, Ensage.Attribute attribute)
         {
-            if(powerTreads != null && me.Health >= me.MaximumHealth * threadsSwitchThreshold)
+            if (powerTreads != null && me.Health >= me.MaximumHealth * threadsSwitchThreshold)
             {
-                 
+
                 var currentAttribute = threads.ActiveAttribute;
                 switch (attribute)
                 {
@@ -663,27 +679,28 @@ namespace BristleJR
 
         private static void Game_OnDraw(EventArgs args)
         {
-            if(_source == null)
+            if (_source == null)
             {
                 return;
             }
-            if(rangeDisplay == null){
+            if (rangeDisplay == null)
+            {
                 rangeDisplay = _source.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
                 rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
-                rangeDisplay.SetControlPoint(2, new Vector3(600, 255, 0));
+                rangeDisplay.SetControlPoint(2, new Vector3(650, 255, 0));
             }
-            
+
             var hpbary = HUDInfo.GetHpBarSizeY();
             var hpvarx = HUDInfo.GetHPBarSizeX();
             var enemies = ObjectManager.GetEntities<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.IsVisible && hero.Team != _source.Team);
-            foreach(var enemy in enemies)
+            foreach (var enemy in enemies)
             {
                 var quillStack = enemy.FindModifier("modifier_bristleback_quill_spray")?.StackCount ?? 0;
                 var duration = enemy.FindModifier("modifier_bristleback_quill_spray")?.RemainingTime ?? 0;
                 if (quillStack > 0)
                 {
                     var hpbarpositionX = HUDInfo.GetHPbarPosition(enemy).X;
-                    var text = "Quill Stacks " + quillStack + " - "+ duration.ToString("F1");
+                    var text = "Quill Stacks " + quillStack + " - " + duration.ToString("F1");
                     var textPos =
                    new Vector2(
                        (int)
@@ -698,7 +715,7 @@ namespace BristleJR
                     FontFlags.AntiAlias);
                 }
             }
-            
+
         }
 
         private static void ModifierAdded(Unit unit, ModifierChangedEventArgs args)
@@ -726,7 +743,7 @@ namespace BristleJR
                 case Order.Ability:
                     if (threads != null)
                     {
-                        if(me.Health >= me.MaximumHealth * threadsSwitchThreshold)
+                        if (me.Health >= me.MaximumHealth * threadsSwitchThreshold)
                         {
                             setThreads(me, threads, Ensage.Attribute.Intelligence);
                         }
@@ -740,7 +757,7 @@ namespace BristleJR
             }
         }
 
-        private static void dealWithAntiMage(IEnumerable<Hero> allies, Hero enemy)        
+        private static void dealWithAntiMage(IEnumerable<Hero> allies, Hero enemy)
         {
             if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage)
             {
@@ -814,19 +831,20 @@ namespace BristleJR
                     }
 
                     if (IsFacing(enemy, _source))
-                    {                        
+                    {
                         if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
                         {
                             bladeMail.UseAbility();
                             Utils.Sleep(5000, "blademail");
                         }
-                        if(pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe"))
+                        if (pipe != null && pipe.CanBeCasted() && Utils.SleepCheck("pipe"))
                         {
                             pipe.UseAbility();
                             Utils.Sleep(5000, "pipe");
                         }
                     }
-                }else if (ult.Cooldown > 0 && enemy.IsAttacking() && IsFacing(enemy, _source) && _source.HasModifier("huskar_life_break"))
+                }
+                else if (ult.Cooldown > 0 && enemy.IsAttacking() && IsFacing(enemy, _source) && _source.HasModifier("huskar_life_break"))
                 {
                     if (Utils.SleepCheck("halberd"))
                     {
@@ -859,7 +877,7 @@ namespace BristleJR
                             {
                                 medallion.UseAbility(ally);
                                 Utils.Sleep(1000, "solar");
-                            }                            
+                            }
                             break;
                         }
                     }
@@ -917,7 +935,8 @@ namespace BristleJR
                     }
                     if (enemy.Distance2D(_source) <= 200)
                     {
-                        if (IsFacing(enemy, _source)){
+                        if (IsFacing(enemy, _source))
+                        {
                             if (bladeMail != null && bladeMail.CanBeCasted() && Utils.SleepCheck("blademail"))
                             {
                                 bladeMail.UseAbility();
@@ -935,11 +954,11 @@ namespace BristleJR
                             Utils.Sleep(5000, "abyssal");
                         }
                     }
-                    if (chase && medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") &&(pact.Cooldown <= 3.5 && pact.Cooldown > 0.5))
+                    if (chase && medallion != null && medallion.CanBeCasted() && Utils.SleepCheck("solar") && (pact.Cooldown <= 3.5 && pact.Cooldown > 0.5))
                     {
                         medallion.UseAbility(enemy);
                     }
-                }                
+                }
             }
         }
 
@@ -947,7 +966,7 @@ namespace BristleJR
         private static void dealWithDrow(IEnumerable<Hero> allies, Hero enemy)
         {
             if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger)
-            {                
+            {
                 foreach (var ally in allies)
                 {
                     if (IsFacing(enemy, ally) && enemy.Distance2D(ally) <= 1000)
@@ -961,7 +980,7 @@ namespace BristleJR
                         {
                             medallion.UseAbility(ally);
                             Utils.Sleep(1000, "solar");
-                        }                        
+                        }
                         break;
                     }
                 }
@@ -979,7 +998,7 @@ namespace BristleJR
                         Utils.Sleep(5000, "halberd");
                     }
                 }
-                
+
             }
         }
 
