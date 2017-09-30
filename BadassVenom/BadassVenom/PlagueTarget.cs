@@ -12,9 +12,9 @@ namespace BadassVenom
 {
     class PlagueTarget
     {
-        KeyValuePair<uint, ClassID> it;
-        public PlagueTarget(uint id, ClassID value) { it = new KeyValuePair<uint, ClassID>(id, value); }
+        KeyValuePair<uint, ClassId> it;
+        public PlagueTarget(uint id, ClassId value) { it = new KeyValuePair<uint, ClassId>(id, value); }
         public uint Id{ get { return it.Key; } }
-        public ClassID Value { get { return it.Value; } }
+        public ClassId Value { get { return it.Value; } }
     }
 }

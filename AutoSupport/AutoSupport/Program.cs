@@ -23,8 +23,8 @@ namespace SupportSharp
         private static bool loaded;
         private static ParticleEffect rangeDisplay;
         private static Boolean rangeWithAether = false;
-        private static ClassID medallionClassId = 0;
-        private static ClassID enemyToHarass = 0;
+        private static ClassId medallionClassId = 0;
+        private static ClassId enemyToHarass = 0;
 
         private static Item Urn,
             Meka,
@@ -114,7 +114,7 @@ namespace SupportSharp
         {
             if (!loaded)
             {
-                me = ObjectMgr.LocalHero;
+                me = ObjectManager.LocalHero;
 
 
                 if (!Game.IsInGame || Game.IsWatchingGame || me == null || Game.IsChatOpen)
@@ -127,7 +127,7 @@ namespace SupportSharp
             if (me == null || !me.IsValid)
             {
                 loaded = false;
-                me = ObjectMgr.LocalHero;
+                me = ObjectManager.LocalHero;
                 supportActive = false;
                 includeSaveSelf = false;
                 shouldCastLotusOrb = false;
@@ -252,7 +252,7 @@ namespace SupportSharp
                 allies = ObjectManager.GetEntitiesFast<Hero>()
                                .Where(
                                    x =>
-                                       x.Team == me.Team && (x.ClassID != me.ClassID) && !x.IsIllusion && x.IsAlive &&
+                                       x.Team == me.Team && (x.ClassId != me.ClassId) && !x.IsIllusion && x.IsAlive &&
                                        me.Distance2D(x) <= 1050);
 
                 if (enemies.Any())
@@ -317,11 +317,11 @@ namespace SupportSharp
                 }
                 
                 uint addedRange = 0;
-                if (Support(me.ClassID))
+                if (Support(me.ClassId))
                 {
-                    switch (me.ClassID)
+                    switch (me.ClassId)
                     {
-                        case ClassID.CDOTA_Unit_Hero_Abaddon:
+                        case ClassId.CDOTA_Unit_Hero_Abaddon:
                             var healSpell = me.Spellbook.SpellQ;
                             if (me.HasModifier("modifier_item_aether_lens"))
                             {
@@ -359,7 +359,7 @@ namespace SupportSharp
                                         ObjectManager.GetEntitiesFast<Unit>()
                                             .Where(
                                                 x =>
-                                                    x.Team != me.Team && (x.ClassID == ClassID.CDOTA_NPC_Observer_Ward || x.ClassID == ClassID.CDOTA_NPC_Observer_Ward_TrueSight) &&
+                                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_NPC_Observer_Ward || x.ClassId == ClassId.CDOTA_NPC_Observer_Ward_TrueSight) &&
                                                     me.Distance2D(x) <= 475)
                                             .ToList();
                 if (wards.Any() && Utils.SleepCheck("deward"))
@@ -393,7 +393,7 @@ namespace SupportSharp
                         ObjectManager.GetEntitiesFast<Hero>()
                             .Where(
                                 x =>
-                                    x.Team == self.Team && self.ClassID != x.ClassID && !x.IsIllusion && x.IsAlive && self.Distance2D(x) <= auxCastRange)
+                                    x.Team == self.Team && self.ClassId != x.ClassId && !x.IsIllusion && x.IsAlive && self.Distance2D(x) <= auxCastRange)
                             .ToList();
                     var isInDanger = false;
                     if (allies.Any())
@@ -438,7 +438,7 @@ namespace SupportSharp
                             .Where(
                                 entity =>
                                     entity.Team == self.Team && self.Distance2D(entity) <= range && !entity.IsIllusion &&
-                                    entity.IsAlive && entity.ClassID != me.ClassID).ToList();
+                                    entity.IsAlive && entity.ClassId != me.ClassId).ToList();
 
                     if (heroes.Any())
                     {
@@ -560,7 +560,7 @@ namespace SupportSharp
 
         private static bool IsInDanger2(Hero ally)
         {
-            if (ally != null && ally.IsAlive && ally.ClassID != me.ClassID)
+            if (ally != null && ally.IsAlive && ally.ClassId != me.ClassId)
             {               
                 var percHealth = (ally.Health <= (ally.MaximumHealth * 0.3));
                 var enemies =
@@ -669,37 +669,37 @@ namespace SupportSharp
             }
             if (!ult.CanBeCasted() && Utils.SleepCheck("shop") && IsInDanger(me) && me.Health < me.MaximumHealth * shopThreshold)
             {
-                var itemsToBuy = Player.QuickBuyItems.OrderByDescending(x => Ability.GetAbilityDataByID((uint)x).Cost);
+                var itemsToBuy = Player.QuickBuyItems.OrderByDescending(x => Ability.GetAbilityDataById(x).Cost);
                 foreach (var itemToBuy in itemsToBuy)
                 {
-                    cost = Ability.GetAbilityDataByID((uint)itemToBuy).Cost;
+                    cost = Ability.GetAbilityDataById(itemToBuy).Cost;
                     if(gold >= cost)
                     {
-                        Player.BuyItem(me, (uint)itemToBuy);
+                        Player.BuyItem(me, itemToBuy);
                         gold = gold - cost;
                         Utils.Sleep(500, "shop");
                     }
                 }
-                cost = Ability.GetAbilityDataByID((uint)AbilityId.item_ward_observer).Cost;
+                cost = Ability.GetAbilityDataById(AbilityId.item_ward_observer).Cost;
                 var wardsCount = GetWardsCount(me, AbilityId.item_ward_observer);
                 if (gold >= cost && wardsCount < 2)
                 {
                     while(gold >= cost && wardsCount < 2)
                     {
-                        Player.BuyItem(me, (uint)AbilityId.item_ward_observer);
+                        Player.BuyItem(me, AbilityId.item_ward_observer);
                         gold = gold - cost;
                         wardsCount += 1;
                         Utils.Sleep(500, "shop");
                     }
                     
                 }
-                cost = Ability.GetAbilityDataByID((uint)AbilityId.item_ward_sentry).Cost;
+                cost = Ability.GetAbilityDataById(AbilityId.item_ward_sentry).Cost;
                 var sentriesCount = GetWardsCount(me, AbilityId.item_ward_sentry);
                 if (gold >= cost && sentriesCount < 1)
                 {
                     while (gold >= cost && sentriesCount < 2)
                     {
-                        Player.BuyItem(me, (uint)AbilityId.item_ward_sentry);
+                        Player.BuyItem(me, AbilityId.item_ward_sentry);
                         gold = gold - cost;
                         sentriesCount += 1;
                         Utils.Sleep(500, "shop");
@@ -708,13 +708,13 @@ namespace SupportSharp
                     Utils.Sleep(500, "shop");
                 }
 
-                cost = Ability.GetAbilityDataByID((uint)AbilityId.item_tpscroll).Cost;
+                cost = Ability.GetAbilityDataById(AbilityId.item_tpscroll).Cost;
                 var tpCount = GetItemCount(me, AbilityId.item_tpscroll);
                 if (gold >= cost && tpCount < 2)
                 {
                     while (gold >= cost && tpCount < 2)
                     {
-                        Player.BuyItem(me, (uint)AbilityId.item_tpscroll);
+                        Player.BuyItem(me, AbilityId.item_tpscroll);
                         gold = gold - cost;
                         tpCount += 1;
                         Utils.Sleep(500, "shop");
@@ -735,7 +735,7 @@ namespace SupportSharp
                 {
                     foreach (var enemy in enemies)
                     {
-                        if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
+                        if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
                         {
                             foreach (var ally in allies)
                             {
@@ -804,9 +804,9 @@ namespace SupportSharp
 
         }
 
-        private static bool Support(ClassID hero)
+        private static bool Support(ClassId hero)
         {
-            if (hero == ClassID.CDOTA_Unit_Hero_Abaddon)
+            if (hero == ClassId.CDOTA_Unit_Hero_Abaddon)
             {
                 return true;
             }
@@ -826,7 +826,7 @@ namespace SupportSharp
         }
 
         private static bool CanGoInvis(Hero ally) {
-            if (ally.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz || ally.ClassID == ClassID.CDOTA_Unit_Hero_Treant || ally.ClassID == ClassID.CDOTA_Unit_Hero_Riki || ally.ClassID == ClassID.CDOTA_Unit_Hero_BountyHunter
+            if (ally.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || ally.ClassId == ClassId.CDOTA_Unit_Hero_Treant || ally.ClassId == ClassId.CDOTA_Unit_Hero_Riki || ally.ClassId == ClassId.CDOTA_Unit_Hero_BountyHunter
                     || ally.HasModifier("modifier_item_invisibility_edge_windwalk") || ally.HasModifier("modifier_item_silver_edge_windwalk"))
             {
                 return true;
@@ -836,11 +836,11 @@ namespace SupportSharp
 
         private static bool isCarry(Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DragonKnight || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassID == ClassID.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Ursa || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Weaver || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Riki || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Terrorblade || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar || enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Luna || enemy.ClassID == ClassID.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz || enemy.ClassID == ClassID.CDOTA_Unit_Hero_LoneDruid || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Gyrocopter || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassID == ClassID.CDOTA_Unit_Hero_FacelessVoid)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Luna || enemy.ClassId == ClassId.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || enemy.ClassId == ClassId.CDOTA_Unit_Hero_LoneDruid || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Gyrocopter || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
             {
                 return true;
             }
@@ -848,8 +848,8 @@ namespace SupportSharp
         }
         private static bool isNuker(Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Morphling || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Zuus || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Necrolyte || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Invoker
-                || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Batrider || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut || enemy.ClassID == ClassID.CDOTA_Unit_Hero_StormSpirit)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Morphling || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Zuus || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Necrolyte || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Invoker
+                || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Batrider || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_StormSpirit)
             {
                 return true;
             }
@@ -859,7 +859,7 @@ namespace SupportSharp
         //Against Slark go BladeMail, SolarCrest, Halberd
         private static bool checkSlarkConditions(Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark)
             {
 
                 var pact = enemy.Spellbook.SpellQ;
@@ -880,16 +880,16 @@ namespace SupportSharp
 
         private static uint GetItemCount(Hero me, AbilityId id)
         {
-            return (me.Inventory.Items.FirstOrDefault(x => x.AbilityId == id)?.CurrentCharges ?? 0)
-                   + (me.Inventory.Stash.FirstOrDefault(x => x.AbilityId == id)?.CurrentCharges ?? 0)
-                   + (me.Inventory.Backpack.FirstOrDefault(x => x.AbilityId == id)?.CurrentCharges ?? 0);
+            return (me.Inventory.Items.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
+                   + (me.Inventory.Stash.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
+                   + (me.Inventory.Backpack.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0);
         }
 
         private static uint GetWardsCount(Hero me, AbilityId id)
         {
-            var inventoryDispenser = me.Inventory.Items.FirstOrDefault(x => x.ID == 218);
-            var stashDispenser = me.Inventory.Stash.FirstOrDefault(x => x.ID == 218);
-            var backpackDispenser = me.Inventory.Backpack.FirstOrDefault(x => x.ID == 218);
+            var inventoryDispenser = me.Inventory.Items.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
+            var stashDispenser = me.Inventory.Stash.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
+            var backpackDispenser = me.Inventory.Backpack.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
 
             return GetItemCount(me, id)
                    + (id == AbilityId.item_ward_observer

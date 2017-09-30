@@ -26,14 +26,14 @@ namespace ChallengeAccepted
             if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame)
                 return;
             me = ObjectMgr.LocalHero;
-            if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Silencer)
+            if (me == null || me.ClassId != ClassId.CDOTA_Unit_Hero_Silencer)
                 return;
             globalSilence = me.Spellbook.SpellR;
             if (me.IsAlive && me.CanCast() && Utils.SleepCheck("global_silence"))
             {
                 foreach (var v in Ensage.Common.Objects.Heroes.GetByTeam(me.GetEnemyTeam()))
                 {
-                    if(v.ClassID == ClassID.CDOTA_Unit_Hero_Enigma && v.IsAlive && v.IsChanneling())
+                    if(v.ClassId == ClassId.CDOTA_Unit_Hero_Enigma && v.IsAlive && v.IsChanneling())
                     {
                         globalSilence.UseAbility();
                         Utils.Sleep(300, "global_silence");

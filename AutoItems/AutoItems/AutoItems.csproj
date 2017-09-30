@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8DEBEB5E-3968-4E9A-8B05-F8EB7648DB4A}</ProjectGuid>
+    <ProjectGuid>{B1A982B7-6E8A-49C4-937F-B80A65E6AEE1}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OmniJR</RootNamespace>
-    <AssemblyName>OmniJR</AssemblyName>
+    <RootNamespace>AutoItems</RootNamespace>
+    <AssemblyName>AutoItems</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,7 +43,7 @@
       <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>..\..\..\..\..\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,6 +56,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\AutoGhost\AutoGhost\AutoGhost.cs">
+      <Link>AutoGhost.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

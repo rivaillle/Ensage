@@ -42,6 +42,9 @@
     <Reference Include="SharpDX">
       <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Mathematics">
+      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

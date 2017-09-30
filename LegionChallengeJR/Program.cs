@@ -107,7 +107,7 @@ namespace ChallengeAccepted
             if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame)
                 return;
             me = ObjectManager.LocalHero;
-            if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Legion_Commander)
+            if (me == null || me.ClassId != ClassId.CDOTA_Unit_Hero_Legion_Commander)
                 return;
             if (Game.IsKeyDown(Menu.Item("Black King Bar Toggle").GetValue<KeyBind>().Key) && !Game.IsChatOpen && Utils.SleepCheck("BKBTOGGLE"))
             {
@@ -195,7 +195,7 @@ namespace ChallengeAccepted
                                     {
                                         halberd.UseAbility(target);
                                         Utils.Sleep(100, "halberdLinkens");
-                                        Utils.Sleep(100, "linken_triggered");                                        
+                                        Utils.Sleep(50, "linken_triggered");                                        
                                     }
                                     else if (vyse != null && vyse.CanBeCasted() && Utils.SleepCheck("vyseLinkens") && Menu.Item("Pop Linkens: ").GetValue<AbilityToggler>().IsEnabled(vyse.Name) && me.Mana - vyse.ManaCost >= 75)
                                     {
@@ -496,10 +496,10 @@ namespace ChallengeAccepted
         {
             if (!Game.IsInGame || Game.IsWatchingGame)
                 return;
-            me = ObjectMgr.LocalHero;
+            me = ObjectManager.LocalHero;
             if (me == null)
                 return;
-            if (me.ClassID != ClassID.CDOTA_Unit_Hero_Legion_Commander)
+            if (me.ClassId != ClassId.CDOTA_Unit_Hero_Legion_Commander)
                 return;
             target = me.ClosestToMouseTarget(200);
             if (target != null)

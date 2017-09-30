@@ -126,7 +126,7 @@ namespace SupportSharp
         {
             if (!loaded)
             {
-                me = ObjectMgr.LocalHero;
+                me = ObjectManager.LocalHero;
 
 
                 if (!Game.IsInGame || Game.IsWatchingGame || me == null || Game.IsChatOpen)
@@ -139,7 +139,7 @@ namespace SupportSharp
             if (me == null || !me.IsValid)
             {
                 loaded = false;
-                me = ObjectMgr.LocalHero;
+                me = ObjectManager.LocalHero;
                 supportActive = false;
                 includeSaveSelf = false;
                 shouldCastLotusOrb = false;
@@ -235,7 +235,7 @@ namespace SupportSharp
                 }
 
                 var myEnemyList =
-                                    ObjectMgr.GetEntities<Hero>()
+                                    ObjectManager.GetEntities<Hero>()
                                         .Where(
                                             x =>
                                                 x.Team != me.Team && !x.IsIllusion && x.IsAlive &&
@@ -278,7 +278,7 @@ namespace SupportSharp
                     ObjectManager.GetEntitiesFast<Hero>()
                         .Where(
                             ally =>
-                                ally.Team == me.Team && me.ClassID != ally.ClassID && ally.IsAlive && !ally.IsIllusion && me.Distance2D(ally) <= 1500)
+                                ally.Team == me.Team && me.ClassId != ally.ClassId && ally.IsAlive && !ally.IsIllusion && me.Distance2D(ally) <= 1500)
                         .ToList();
 
                 enemies =
@@ -289,15 +289,15 @@ namespace SupportSharp
 
                 fountain =
                     ObjectManager.GetEntitiesFast<Entity>()
-                        .First(entity => entity.ClassID == ClassID.CDOTA_Unit_Fountain && entity.Team == me.Team);
+                        .First(entity => entity.ClassId == ClassId.CDOTA_Unit_Fountain && entity.Team == me.Team);
 
                 
                 uint addedRange = 0;
-                if (me.ClassID == ClassID.CDOTA_Unit_Hero_Omniknight)
+                if (me.ClassId == ClassId.CDOTA_Unit_Hero_Omniknight)
                 {
-                    switch (me.ClassID)
+                    switch (me.ClassId)
                     {
-                        case ClassID.CDOTA_Unit_Hero_Omniknight:
+                        case ClassId.CDOTA_Unit_Hero_Omniknight:
                             if (me.HasModifier("modifier_item_aether_lens"))
                             {
                                 addedRange += 200;
@@ -320,7 +320,7 @@ namespace SupportSharp
                                             ObjectManager.GetEntitiesFast<Unit>()
                                                 .Where(
                                                     x =>
-                                                        x.Team != me.Team && (x.ClassID == ClassID.CDOTA_NPC_Observer_Ward || x.ClassID == ClassID.CDOTA_NPC_Observer_Ward_TrueSight) &&
+                                                        x.Team != me.Team && (x.ClassId == ClassId.CDOTA_NPC_Observer_Ward || x.ClassId == ClassId.CDOTA_NPC_Observer_Ward_TrueSight) &&
                                                         me.Distance2D(x) <= 475);
                     if (wards.Any() && Utils.SleepCheck("deward"))
                     {
@@ -366,7 +366,7 @@ namespace SupportSharp
                      ObjectManager.GetEntitiesFast<Hero>()
                          .Where(
                              x =>
-                                 x.Team == self.Team && x.ClassID != me.ClassID && me.Distance2D(x) <= auxCastRange && IsInDangerRepel(x) && !x.IsIllusion && x.IsAlive);
+                                 x.Team == self.Team && x.ClassId != me.ClassId && me.Distance2D(x) <= auxCastRange && IsInDangerRepel(x) && !x.IsIllusion && x.IsAlive);
 
                 if (allies.Any())
                 {
@@ -399,7 +399,7 @@ namespace SupportSharp
                 if (self.IsAlive && !self.IsChanneling() &&
                     (!self.IsInvisible() || !me.Modifiers.Any(x => x.Name == "modifier_treant_natures_guise")))
                 {
-                    var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && hero.Distance2D(me) <= range && !hero.IsIllusion && hero.ClassID != me.ClassID && hero.Team == me.Team);
+                    var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && hero.Distance2D(me) <= range && !hero.IsIllusion && hero.ClassId != me.ClassId && hero.Team == me.Team);
 
                     if (allies.Any())
                     {
@@ -464,7 +464,7 @@ namespace SupportSharp
                             return true;
                         }
                     }
-                    else if(enemy.ClassID == ClassID.CDOTA_Unit_Hero_Disruptor && IsFacing(enemy, ally) && enemy.Spellbook.SpellW.IsInAbilityPhase)
+                    else if(enemy.ClassId == ClassId.CDOTA_Unit_Hero_Disruptor && IsFacing(enemy, ally) && enemy.Spellbook.SpellW.IsInAbilityPhase)
                     {
                         return true;
                     }
@@ -608,19 +608,19 @@ namespace SupportSharp
                     {
                         if (miracleSpell.CanBeCasted() && Utils.SleepCheck("miracle"))
                         {
-                            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && enemy.Distance2D(me) <= 600 && (enemy.HasModifier("modifier_juggernaut_omnislash") || enemy.Spellbook.SpellR.IsInAbilityPhase) && Utils.SleepCheck("miracle"))
+                            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Distance2D(me) <= 600 && (enemy.HasModifier("modifier_juggernaut_omnislash") || enemy.Spellbook.SpellR.IsInAbilityPhase) && Utils.SleepCheck("miracle"))
                             {
                                 miracleSpell.UseAbility();
                                 Utils.Sleep(4000 + Game.Ping, "miracle");
                                 return;
 
                             }
-                            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && enemy.HasModifier("modifier_sven_gods_strength"))
+                            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && enemy.HasModifier("modifier_sven_gods_strength"))
                             {
                                 allyForMiracle(miracleSpell, enemy);
 
                             }
-                            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && (enemy.HasModifier("modifier_legion_commander_duel") || enemy.Spellbook.SpellR.IsInAbilityPhase))
+                            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander && Utils.SleepCheck("miracle") && enemy.Distance2D(me) <= 800 && (enemy.HasModifier("modifier_legion_commander_duel") || enemy.Spellbook.SpellR.IsInAbilityPhase))
                             {
                                 allyForMiracle(miracleSpell, enemy);
                             }
@@ -733,10 +733,10 @@ namespace SupportSharp
 
         private static bool isCarry(Hero enemy)
         {
-            if(enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DragonKnight || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassID == ClassID.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Ursa || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Weaver || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner 
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Riki || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Terrorblade || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar || enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin)
+            if(enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner 
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin)
             {
                 return true;
             }
@@ -744,8 +744,8 @@ namespace SupportSharp
         }
         private static bool isNuker(Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Morphling || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Necrolyte || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Invoker
-                || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Batrider || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Morphling || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Necrolyte || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Invoker
+                || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Batrider || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut)
             {
                 return true;
             }

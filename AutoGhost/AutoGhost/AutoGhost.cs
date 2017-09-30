@@ -21,18 +21,20 @@ namespace AutoGhost
                 destiny = target;
             }
             var isFacing = false;
-            if(dodge == true && destiny.ClassID != me.ClassID)
+            if(dodge == true && destiny.ClassId != me.ClassId)
             {
                 foreach (var enemy in enemies)
                 {
                     if(IsFacing(destiny, enemy))
                     {
+                        Console.WriteLine("oxee");
                         isFacing = true;
                         return false;
                     }
                 }
                 if (isFacing)
                 {
+                    Console.WriteLine("oxee2");
                     return false;
                 }
             }
@@ -40,7 +42,7 @@ namespace AutoGhost
             {
                 foreach (var enemy in enemies)
                 {
-                    if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin)
+                    if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin)
                     {
                         if (IsFacing(enemy, destiny) && (enemy.Spellbook.SpellW.IsInAbilityPhase || enemy.HasModifier("modifier_phantom_assassin_phantom_strike")))
                         {
@@ -49,7 +51,7 @@ namespace AutoGhost
                             return true;
                         }
                     }
-                    if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander)
+                    if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander)
                     {
                         var duel = enemy.Spellbook.SpellR;
                         if (IsFacing(enemy, destiny) && (duel.IsInAbilityPhase || (enemy.Distance2D(me) <= 200 && duel.CanBeCasted())))
@@ -59,7 +61,7 @@ namespace AutoGhost
                             return true;
                         }
                     }
-                    else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark)
+                    else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark)
                     {
                         if (enemy.Distance2D(destiny) < 300 && destiny.HasModifier("modifier_slark_pounce_leash") && Utils.SleepCheck("pounce_dodged"))
                         {
@@ -69,23 +71,46 @@ namespace AutoGhost
                             return true;
                         }
                     }
-                    else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && enemy.Distance2D(destiny) < 400 && Utils.SleepCheck("omnislash_dodged_" + destiny.ClassID) && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
+                    else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Distance2D(destiny) < 400 && Utils.SleepCheck("omnislash_dodged_" + destiny.ClassId) && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
                     {
-                        Console.WriteLine("dodge jugg with"+ ghost.Name);
+                        Console.WriteLine("dodge jugg with" + ghost.Name);
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
-                        Utils.Sleep(5000, "omnislash_dodged_" + destiny.ClassID);
+                        Utils.Sleep(5000, "omnislash_dodged_" + destiny.ClassId);
                         return true;
                     }
-                    else if (dodge == true && (enemy.ClassID != ClassID.CDOTA_Unit_Hero_Juggernaut || Utils.SleepCheck("omnislash_dodged_" + destiny.ClassID)) && IsFacing(enemy, destiny) && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
+                    else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage && enemy.Distance2D(destiny) < 200 && IsFacing(enemy, destiny))
+                    {
+                        var manta = enemy.FindItem("item_manta");
+                        if (manta != null && !manta.CanBeCasted() && manta.Cooldown > 25)
+                        {
+                            useItem(ghost, target);
+                        }else if(manta == null)
+                        {
+                            useItem(ghost, target);
+                        }
+                    }
+                    else if (dodge == true && (enemy.ClassId != ClassId.CDOTA_Unit_Hero_Juggernaut || Utils.SleepCheck("omnislash_dodged_" + destiny.ClassId)) && IsFacing(enemy, destiny) && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.IsNuke()) && enemy.Distance2D(destiny) < 650)
                     {
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
                         return true;
-                        
-                       
-                    }
 
+
+                    }
+                    else if (isCarry(enemy) && enemy.Distance2D(destiny) < enemy.AttackRange && IsFacing(enemy, destiny) && (enemy.IsAttacking() || destiny.Health < destiny.MaximumHealth * 20 / 100) && (destiny.Health < destiny.MaximumHealth * 40 / 100 || isCarryMad(enemy)))
+                    {
+                        Console.WriteLine("hahaha");
+                        useItem(ghost, target);
+                        Utils.Sleep(1000, ghost.Name);
+                        return true;
+                    }
+                    else if (isNuker(enemy) && IsFacing(enemy, destiny) && (enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.IsNuke()) || (enemy.IsAttacking() && hasLowHeahth(destiny))) && IsFacing(enemy, destiny) && enemy.Distance2D(destiny) <= 1000)
+                    {
+                        useItem(ghost, target);
+                        Utils.Sleep(1000, ghost.Name);
+                        return true;
+                    }
                 }
             }
             return false;
@@ -133,13 +158,13 @@ namespace AutoGhost
                     "modifier_item_urn_damage", "modifier_doom_bringer_doom", "modifier_axe_battle_hunger",
                     "modifier_queenofpain_shadow_strike", "modifier_phoenix_fire_spirit_burn",
                     "modifier_venomancer_poison_nova", "modifier_venomancer_venomous_gale",
-                    "modifier_silencer_curse_of_the_silent", "modifier_silencer_last_word", "modifier_bane_fiends_grip",
+                    "modifier_silencer_last_word", "modifier_bane_fiends_grip",
                     "modifier_earth_spirit_magnetize", "modifier_jakiro_macropyre", "modifier_nerolyte_reapers_scythe",
                     "modifier_batrider_flaming_lasso", "modifier_sniper_assassinate", "modifier_pudge_dismember",
                     "modifier_enigma_black_hole_pull", "modifier_disruptor_static_storm", "modifier_sand_king_epicenter",
                     "modifier_bloodseeker_rupture", "modifier_dual_breath_burn", "modifier_jakiro_liquid_fire_burn",
                     "modifier_axe_battle_hunger", "modifier_viper_poison_attack",
-                    "modifier_viper_viper_strike", "modifier_bounty_hunter_track", "modifier_life_stealer_open_wounds",
+                    "modifier_viper_viper_strike", "modifier_life_stealer_open_wounds",
                     "modifier_phantom_assassin_stiflingdagger", "modifier_ember_spirit_searing_chains", "modifier_phantom_lancer_spirit_lance", "modifier_treant_leech_seed"
                 };
                 foreach (var buff in buffs)
@@ -209,12 +234,12 @@ namespace AutoGhost
             float n1 = (float)Math.Sin(hero.RotationRad - angle);
             float n2 = (float)Math.Cos(hero.RotationRad - angle);
 
-            return (Math.PI - Math.Abs(Math.Atan2(n1, n2))) < 0.2;
+            return (Math.PI - Math.Abs(Math.Atan2(n1, n2))) < 0.1;
         }
 
         private static bool CanGoInvis(Hero ally)
         {
-            if (ally.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz || ally.ClassID == ClassID.CDOTA_Unit_Hero_Treant || ally.ClassID == ClassID.CDOTA_Unit_Hero_Riki || ally.ClassID == ClassID.CDOTA_Unit_Hero_BountyHunter
+            if (ally.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || ally.ClassId == ClassId.CDOTA_Unit_Hero_Treant || ally.ClassId == ClassId.CDOTA_Unit_Hero_Riki || ally.ClassId == ClassId.CDOTA_Unit_Hero_BountyHunter
                     || ally.HasModifier("modifier_item_invisibility_edge_windwalk") || ally.HasModifier("modifier_item_silver_edge_windwalk"))
             {
                 return true;
@@ -222,13 +247,110 @@ namespace AutoGhost
             return false;
         }
 
+        public static void AuxItems(Hero me, IEnumerable<Hero> enemies, IEnumerable<Hero> allies)
+        {
+            var Medallion = me.FindItem("item_medallion_of_courage");
+            if (Medallion == null)
+            {
+                Medallion = me.FindItem("item_solar_crest");
+            }
+            var Eul = me.FindItem("item_cyclone");
+            if (!me.IsInvisible() && me.CanCast())
+            {
+                if(Medallion != null || Eul != null)
+                {
+                    foreach (var enemy in enemies)
+                    {
+                        if (Medallion != null && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
+                        {
+                            if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
+                            {
+                                foreach (var ally in allies)
+                                {
+                                    if (IsFacing(enemy, ally))
+                                    {
+                                        Medallion.UseAbility(ally);
+                                        Utils.Sleep(1000, "solar");
+                                    }
+
+
+                                }
+                            }
+                        }
+                        if (Eul != null && enemy.Distance2D(me) <= 700 && !me.IsInvisible())
+                        {
+                            var blink = enemy.FindItem("item_blink");
+                            if (Eul != null && Utils.SleepCheck("cyclone") && Eul.CanBeCasted())
+                            {
+                                if (blink != null && blink.Cooldown > 8)
+                                {
+                                    Eul.UseAbility(enemy);
+                                    Utils.Sleep(1000, "cyclone");
+                                }
+                                else if (enemy.IsChanneling())
+                                {
+                                    Eul.UseAbility(enemy);
+                                    Utils.Sleep(1000, "cyclone");
+                                }
+                            }
+                        }
+
+                    }
+                }            
+                if (Medallion != null && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
+                {
+                    foreach (var ally in allies)
+                    {
+                        if (isCarry(ally) && ally.IsAttacking())
+                        {
+                            foreach (var enemy in enemies)
+                            {
+                                if (IsFacing(ally, enemy) && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
+                                {
+                                    Medallion.UseAbility(enemy);
+                                    Utils.Sleep(1000, "solar");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+        }
+
         public static bool isCarry(Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DragonKnight || enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassID == ClassID.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Ursa || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Weaver || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Riki || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Terrorblade || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar || enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut || enemy.ClassID == ClassID.CDOTA_Unit_Hero_FacelessVoid)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bristleback || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tiny || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Furion || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Spectre || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Alchemist || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool isCarryMad(Hero enemy)
+        {
+            if(enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord && enemy.HasModifier("modifier_troll_warlord_battle_trance"))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static bool isNuker(Hero enemy)
+        {
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Morphling || enemy.ClassId == ClassId.CDOTA_Unit_Hero_QueenOfPain || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Necrolyte || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Invoker
+                || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Batrider || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_StormSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tinker)
+            {
+                return true;
+            }
+            return false;
+        }
+        private static bool hasLowHeahth(Hero hero) {
+            if(hero.Health < hero.MaximumHealth * 40 / 100)
             {
                 return true;
             }

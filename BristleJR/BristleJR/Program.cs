@@ -40,7 +40,7 @@ namespace BristleJR
             Game.OnUpdate += Game_OnUpdate;
             Game.OnWndProc += Game_OnWndProc;
             Drawing.OnDraw += Game_OnDraw;
-            Game.PrintMessage("Bristleback Sharp by <font color='#ff1111'>Jirico</font> Loaded !!", MessageType.LogMessage);
+            Game.PrintMessage("Bristleback Sharp by <font color='#ff1111'>Jirico</font> Loaded !!");
             Player.OnExecuteOrder += Player_OnExecuteAction;
             var menu_utama = new Menu("Options", "opsi");
             menu_utama.AddItem(new MenuItem("Quill", "Quill").SetValue(new StringList(new[] { "Max", "Smart", "Disable", "Farm", "Smart and Farm" })));
@@ -82,13 +82,13 @@ namespace BristleJR
             {
                 return;
             }
-            if (_source == null || _source.ClassID != ClassID.CDOTA_Unit_Hero_Bristleback)
+            if (_source == null || _source.ClassId != ClassId.CDOTA_Unit_Hero_Bristleback)
             {
                 return;
             }
 
             var _enemy = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.IsVisible && hero.Team != _source.Team);
-            var _creep = ObjectManager.GetEntitiesFast<Creep>().Where(x => (x.ClassID == ClassID.CDOTA_BaseNPC_Creep_Lane || x.ClassID == ClassID.CDOTA_BaseNPC_Creep_Siege) && x.IsAlive && x.IsSpawned && x.IsVisible).ToList();
+            var _creep = ObjectManager.GetEntitiesFast<Creep>().Where(x => (x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Lane || x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Siege) && x.IsAlive && x.IsSpawned && x.IsVisible).ToList();
 
             if (Quill == null)
             {
@@ -267,7 +267,7 @@ namespace BristleJR
             */
             if (Crimson != null || bladeMail != null || halberd != null || medallion != null || abyssal != null)
             {
-                var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassID != _source.ClassID && hero.Team == _source.Team);
+                var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassId != _source.ClassId && hero.Team == _source.Team);
                 foreach (var enemy in _enemy)
                 {
                     dealWithAntiMage(allies, enemy);
@@ -278,7 +278,7 @@ namespace BristleJR
                     dealWithLuna(allies, enemy);
                     if (Crimson != null || medallion != null)
                     {
-                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Juggernaut && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
+                        if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
                         {
                             if (Crimson != null && Utils.SleepCheck("crimson") && _source.Distance2D(enemy) < 400)
                             {
@@ -304,12 +304,12 @@ namespace BristleJR
                         }
                         */
                         }
-                        else if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) < 400 && Utils.SleepCheck("crimson"))
+                        else if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) < 400 && Utils.SleepCheck("crimson"))
                         {
                             blink = enemy.FindItem("item_blink");
                             if (blink != null && blink.Cooldown > 8)
                             {
-                                if (!((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && !enemy.HasModifier("modifier_sven_gods_strength")) || (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander && !(enemy.Spellbook.SpellR.CanBeCasted()))))
+                                if (!((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven && !enemy.HasModifier("modifier_sven_gods_strength")) || (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander && !(enemy.Spellbook.SpellR.CanBeCasted()))))
                                 {
                                     Crimson.UseAbility();
                                     Utils.Sleep(4000 + Game.Ping, "crimson");
@@ -325,7 +325,7 @@ namespace BristleJR
                             bladeMail.UseAbility();
                             Utils.Sleep(1000 + Game.Ping, "blademail");
                         }
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Axe && _source.Distance2D(enemy) < 350 && Utils.SleepCheck("blademail") && enemy.Spellbook.SpellQ.CanBeCasted()))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Axe && _source.Distance2D(enemy) < 350 && Utils.SleepCheck("blademail") && enemy.Spellbook.SpellQ.CanBeCasted()))
                         {
                             var blink = enemy.FindItem("item_blink");
                             if (blink != null && blink.Cooldown > 8)
@@ -335,13 +335,13 @@ namespace BristleJR
                             }
 
                         }
-                        if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_sven_gods_strength") && IsFacing(enemy, _source))
+                        if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_sven_gods_strength") && IsFacing(enemy, _source))
                         {
                             bladeMail.UseAbility();
                             Utils.Sleep(1000 + Game.Ping, "blademail");
 
                         }
-                        else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_phantom_assassin_phantom_strike") && IsFacing(enemy, _source))
+                        else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_phantom_assassin_phantom_strike") && IsFacing(enemy, _source))
                         {
                             bladeMail.UseAbility();
                             Utils.Sleep(1000 + Game.Ping, "blademail");
@@ -352,7 +352,7 @@ namespace BristleJR
                             }
 
                         }
-                        else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_slark_shadow_dance_passive_regen") && IsFacing(enemy, _source))
+                        else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("blademail") && enemy.HasModifier("modifier_slark_shadow_dance_passive_regen") && IsFacing(enemy, _source))
                         {
                             bladeMail.UseAbility();
                             Utils.Sleep(1000 + Game.Ping, "blademail");
@@ -362,7 +362,7 @@ namespace BristleJR
                     if (halberd != null && Utils.SleepCheck("halberd") && halberd.CanBeCasted())
                     {
 
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 600 && Utils.SleepCheck("heaven"))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 600 && Utils.SleepCheck("heaven"))
                         {
                             if (_source.Distance2D(enemy) <= 200 && (enemy.Spellbook.SpellR.CanBeCasted()) && IsFacing(enemy, _source))
                             {
@@ -375,7 +375,7 @@ namespace BristleJR
                                 Utils.Sleep(5000 + Game.Ping, "halberd");
                             }
                         }
-                        else if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar && enemy.Distance2D(_source) <= 600)
+                        else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar && enemy.Distance2D(_source) <= 600)
                         {
                             var ult = enemy.Spellbook.SpellR;
                             if (ult != null && ult.Cooldown > 0 && enemy.IsAttacking())
@@ -388,7 +388,7 @@ namespace BristleJR
                     if (medallion != null && medallion.CanBeCasted())
                     {
 
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_legion_commander_duel"))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_legion_commander_duel"))
                         {
                             foreach (var ally in allies)
                             {
@@ -400,7 +400,7 @@ namespace BristleJR
                             }
 
                         }
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_sven_gods_strength"))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar") && enemy.HasModifier("modifier_sven_gods_strength"))
                         {
                             foreach (var ally in allies)
                             {
@@ -412,7 +412,7 @@ namespace BristleJR
                             }
 
                         }
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_PhantomAssassin) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar"))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin) && _source.Distance2D(enemy) <= 1000 && Utils.SleepCheck("solar"))
                         {
                             foreach (var ally in allies)
                             {
@@ -424,7 +424,7 @@ namespace BristleJR
                             }
 
                         }
-                        if ((enemy.ClassID == ClassID.CDOTA_Unit_Hero_Axe) && _source.Distance2D(enemy) <= 1000 && enemy.HasModifier("modifier_axe_berserkers_call_armor") && Utils.SleepCheck("solar"))
+                        if ((enemy.ClassId == ClassId.CDOTA_Unit_Hero_Axe) && _source.Distance2D(enemy) <= 1000 && enemy.HasModifier("modifier_axe_berserkers_call_armor") && Utils.SleepCheck("solar"))
                         {
                             foreach (var ally in allies)
                             {
@@ -438,9 +438,9 @@ namespace BristleJR
                         }
 
                     }
-                    if (abyssal != null && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("abyssal") && abyssal.CanBeCasted() &&
-                            (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven || enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Treant || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassID == ClassID.CDOTA_Unit_Hero_Enigma || enemy.IsChanneling()))
+                    if (abyssal != null && enemy.ClassId != ClassId.CDOTA_Unit_Hero_Slark && _source.Distance2D(enemy) <= 200 && Utils.SleepCheck("abyssal") && abyssal.CanBeCasted() &&
+                            (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Treant || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Enigma || enemy.IsChanneling()))
                     {
                         abyssal.UseAbility(enemy);
                         Utils.Sleep(1000, "abyssal");
@@ -490,13 +490,13 @@ namespace BristleJR
 
                     }
                     Orbwalking.Orbwalk(enemy, 0, 0, false, true);
-                    if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted() && !_source.IsAttacking() && enemy.ClassID != ClassID.CDOTA_Unit_Hero_Slark)
+                    if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted() && !_source.IsAttacking() && enemy.ClassId != ClassId.CDOTA_Unit_Hero_Slark)
                     {
                         var isSafe = true;
                         foreach (var enemyUnit in _enemy)
                         {
                             blink = enemyUnit.FindItem("item_blink");
-                            if (enemyUnit.ClassID != enemy.ClassID && _source.Distance2D(enemyUnit) < 800 && (IsFacing(enemyUnit, _source) || (blink != null && blink.Cooldown > 6)))
+                            if (enemyUnit.ClassId != enemy.ClassId && _source.Distance2D(enemyUnit) < 800 && (IsFacing(enemyUnit, _source) || (blink != null && blink.Cooldown > 6)))
                             {
                                 isSafe = false;
                             }
@@ -531,7 +531,7 @@ namespace BristleJR
                                         ObjectManager.GetEntitiesFast<Unit>()
                                             .Where(
                                                 x =>
-                                                    x.Team != _source.Team && (x.ClassID == ClassID.CDOTA_NPC_Observer_Ward || x.ClassID == ClassID.CDOTA_NPC_Observer_Ward_TrueSight) &&
+                                                    x.Team != _source.Team && (x.ClassId == ClassId.CDOTA_NPC_Observer_Ward || x.ClassId == ClassId.CDOTA_NPC_Observer_Ward_TrueSight) &&
                                                     _source.Distance2D(x) <= 475)
                                             .ToList();
                 if (wards.Any() && Utils.SleepCheck("deward"))
@@ -687,7 +687,7 @@ namespace BristleJR
             {
                 rangeDisplay = _source.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
                 rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
-                rangeDisplay.SetControlPoint(2, new Vector3(650, 255, 0));
+                rangeDisplay.SetControlPoint(2, new Vector3(700, 255, 0));
             }
 
             var hpbary = HUDInfo.GetHpBarSizeY();
@@ -729,18 +729,18 @@ namespace BristleJR
             {
                 return;
             }
-            switch (args.Order)
+            switch (args.OrderId)
             {
-                case Order.TransferItem:
-                case Order.MoveItem:
-                case Order.DropItem:
-                case Order.PickItem:
-                case Order.BuyItem:
-                case Order.AttackTarget:
-                case Order.AttackLocation:
-                case Order.AbilityTarget:
-                case Order.AbilityLocation:
-                case Order.Ability:
+                case OrderId.TransferItem:
+                case OrderId.MoveItem:
+                case OrderId.DropItem:
+                case OrderId.PickItem:
+                case OrderId.BuyItem:
+                case OrderId.AttackTarget:
+                case OrderId.AttackLocation:
+                case OrderId.AbilityTarget:
+                case OrderId.AbilityLocation:
+                case OrderId.Ability:
                     if (threads != null)
                     {
                         if (me.Health >= me.MaximumHealth * threadsSwitchThreshold)
@@ -749,9 +749,9 @@ namespace BristleJR
                         }
                     }
                     break;
-                case Order.ToggleAbility:
-                case Order.MoveLocation:
-                case Order.MoveTarget:
+                case OrderId.ToggleAbility:
+                case OrderId.MoveLocation:
+                case OrderId.MoveTarget:
                 default:
                     break;
             }
@@ -759,7 +759,7 @@ namespace BristleJR
 
         private static void dealWithAntiMage(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_AntiMage)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage)
             {
                 var manta = enemy.FindItem("item_manta");
                 if (manta != null && manta.Cooldown > 20 && enemy.IsAttacking())
@@ -802,7 +802,7 @@ namespace BristleJR
         //Against Huskar go BladeMail, SolarCrest, Halberd and Pipe
         private static void dealWithHuskar(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Huskar)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar)
             {
                 var ult = enemy.Spellbook.SpellR;
                 if (ult.IsInAbilityPhase)
@@ -858,7 +858,7 @@ namespace BristleJR
         //Against Huskar go BladeMail, SolarCrest, Halberd and Pipe
         private static void dealWithSven(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Sven)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven)
             {
                 var ult = enemy.Spellbook.SpellR;
                 if (enemy.HasModifier("modifier_sven_gods_strength"))
@@ -911,7 +911,7 @@ namespace BristleJR
         //Against Slark go BladeMail, SolarCrest, Halberd
         private static void dealWithSlark(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Slark)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark)
             {
                 var pact = enemy.Spellbook.SpellQ;
                 if (true)
@@ -965,7 +965,7 @@ namespace BristleJR
         //Against Slark go BladeMail, SolarCrest, Halberd
         private static void dealWithDrow(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_DrowRanger)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger)
             {
                 foreach (var ally in allies)
                 {
@@ -1005,7 +1005,7 @@ namespace BristleJR
         //Against Slark go BladeMail, SolarCrest, Halberd
         private static void dealWithLuna(IEnumerable<Hero> allies, Hero enemy)
         {
-            if (enemy.ClassID == ClassID.CDOTA_Unit_Hero_Luna)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Luna)
             {
                 var ult = enemy.Spellbook.SpellR;
                 if (ult.IsInAbilityPhase && enemy.Distance2D(_source) <= 675)

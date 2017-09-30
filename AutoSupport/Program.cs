@@ -95,7 +95,7 @@ namespace SupportSharp
             if (me == null || !me.IsValid)
             {
                 loaded = false;
-                me = ObjectMgr.LocalHero;
+                me = ObjectManager.LocalHero;
                 supportActive = false;
                 includeSaveSelf = false;
                 shouldCastLotusOrb = false;
@@ -162,8 +162,8 @@ namespace SupportSharp
                                 ally.Team == me.Team && ally.IsAlive && !ally.IsIllusion && me.Distance2D(ally) <= 1500)
                         .ToList();
                 fountain =
-                    ObjectMgr.GetEntities<Entity>()
-                        .First(entity => entity.ClassID == ClassID.CDOTA_Unit_Fountain && entity.Team == me.Team);
+                    ObjectManager.GetEntities<Entity>()
+                        .First(entity => entity.ClassId == ClassId.CDOTA_Unit_Fountain && entity.Team == me.Team);
 
 
                 if (allies.Any())
@@ -188,7 +188,7 @@ namespace SupportSharp
                                 ObjectMgr.GetEntities<Entity>()
                                     .Any(
                                         x =>
-                                            x.ClassID == ClassID.CDOTA_BaseNPC_Tower && x.Team != me.Team &&
+                                            x.ClassId == ClassId.CDOTA_BaseNPC_Tower && x.Team != me.Team &&
                                             x.IsAlive && ally.Distance2D(x) <= 750);
 
                             if (me.CanUseItems())
@@ -362,62 +362,62 @@ namespace SupportSharp
                 }
 
 
-                if (Support(me.ClassID))
+                if (Support(me.ClassId))
                 {
-                    switch (me.ClassID)
+                    switch (me.ClassId)
                     {
-                        case ClassID.CDOTA_Unit_Hero_Abaddon:
+                        case ClassId.CDOTA_Unit_Hero_Abaddon:
                             Save(me, me.Spellbook.SpellW, 1000, me.Spellbook.SpellW.CastRange);
                             Heal(me, me.Spellbook.SpellQ, new float[] { 100, 150, 200, 250 },
                                 800,
                                 1, false);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Chen:
+                        case ClassId.CDOTA_Unit_Hero_Chen:
                             Save(me, me.Spellbook.SpellE, 1000, me.Spellbook.SpellE.CastRange);
                             Heal(me, me.Spellbook.SpellR, new float[] { 200, 300, 400 },
                                 2200000, 2);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Dazzle:
+                        case ClassId.CDOTA_Unit_Hero_Dazzle:
                             Save(me, me.Spellbook.SpellW, 300, me.Spellbook.SpellW.CastRange);
                             Heal(me, me.Spellbook.SpellE, new float[] { 80, 100, 120, 140 },
                                 750,
                                 1);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Enchantress:
+                        case ClassId.CDOTA_Unit_Hero_Enchantress:
                             Heal(me, me.Spellbook.SpellE, new float[] { 400, 600, 800, 1000 },
                                 275, 2);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Legion_Commander:
+                        case ClassId.CDOTA_Unit_Hero_Legion_Commander:
                             Heal(me, me.Spellbook.SpellW, new float[] { 150, 200, 250, 300 },
                                 800,
                                 1);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Necrolyte:
+                        case ClassId.CDOTA_Unit_Hero_Necrolyte:
                             Heal(me, me.Spellbook.SpellQ, new float[] { 70, 90, 110, 130 },
                                 475,
                                 2);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Omniknight:
+                        case ClassId.CDOTA_Unit_Hero_Omniknight:
                             Heal(me, me.Spellbook.SpellQ, new float[] { 90, 180, 270, 360 },
                                 950,
                                 1);
                             Save(me, me.Spellbook.SpellW, 1570, me.Spellbook.SpellW.CastRange);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Oracle:
+                        case ClassId.CDOTA_Unit_Hero_Oracle:
                             Save(me, me.Spellbook.SpellR, 1270, me.Spellbook.SpellR.CastRange);
                             Heal(me, me.Spellbook.SpellE, new float[] { 99, 198, 297, 396 },
                                 750,
                                 1);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Shadow_Demon:
+                        case ClassId.CDOTA_Unit_Hero_Shadow_Demon:
                             Save(me, me.Spellbook.SpellQ, 900,
                                 me.Spellbook.SpellQ.CastRange);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Treant:
+                        case ClassId.CDOTA_Unit_Hero_Treant:
                             Heal(me, me.Spellbook.SpellE, new float[] { 60, 105, 150, 195 },
                                 2200000, 1);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Undying:
+                        case ClassId.CDOTA_Unit_Hero_Undying:
                             var unitsAround =
                                 ObjectMgr.GetEntities<Entity>()
                                     .Where(entity => entity.IsAlive && me.Distance2D(entity) <= 1300).ToList();
@@ -438,14 +438,14 @@ namespace SupportSharp
                                     750, 1);
                             }
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Warlock:
+                        case ClassId.CDOTA_Unit_Hero_Warlock:
                             Heal(me, me.Spellbook.SpellW, new float[] { 165, 275, 385, 495 },
                                 me.Spellbook.SpellW.CastRange, 1);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_Winter_Wyvern:
+                        case ClassId.CDOTA_Unit_Hero_Winter_Wyvern:
                             Save(me, me.Spellbook.SpellE, 930, me.Spellbook.SpellE.CastRange);
                             break;
-                        case ClassID.CDOTA_Unit_Hero_WitchDoctor:
+                        case ClassId.CDOTA_Unit_Hero_WitchDoctor:
                             Heal(me, me.Spellbook.SpellW, new float[] { 16, 24, 32, 40 }, 500,
                                 3);
                             break;
@@ -574,7 +574,7 @@ namespace SupportSharp
                         {
                             if (ally.Health <= (ally.MaximumHealth * 0.7) && healSpell.CanBeCasted() &&
                                 self.Distance2D(fountain) > 2000 && IsInDanger(ally) &&
-                                ally.Health + amount[healSpell.Level - 1] <= ally.MaximumHealth && (me.ClassID != ClassID.CDOTA_Unit_Hero_WitchDoctor || !me.Spellbook.SpellW.IsToggled))
+                                ally.Health + amount[healSpell.Level - 1] <= ally.MaximumHealth && (me.ClassId != ClassId.CDOTA_Unit_Hero_WitchDoctor || !me.Spellbook.SpellW.IsToggled))
                             {
                                 if (targettingType == 1)
                                     CastHeal(healSpell, ally);
@@ -840,18 +840,18 @@ namespace SupportSharp
             return false;
         }
 
-        private static bool Support(ClassID hero)
+        private static bool Support(ClassId hero)
         {
-            if ((hero == ClassID.CDOTA_Unit_Hero_Oracle || hero == ClassID.CDOTA_Unit_Hero_Winter_Wyvern ||
-                 hero == ClassID.CDOTA_Unit_Hero_KeeperOfTheLight || hero == ClassID.CDOTA_Unit_Hero_Dazzle ||
-                 hero == ClassID.CDOTA_Unit_Hero_Chen || hero == ClassID.CDOTA_Unit_Hero_Enchantress ||
-                 hero == ClassID.CDOTA_Unit_Hero_Legion_Commander || hero == ClassID.CDOTA_Unit_Hero_Abaddon ||
-                 hero == ClassID.CDOTA_Unit_Hero_Omniknight || hero == ClassID.CDOTA_Unit_Hero_Treant ||
-                 hero == ClassID.CDOTA_Unit_Hero_Wisp || hero == ClassID.CDOTA_Unit_Hero_Centaur ||
-                 hero == ClassID.CDOTA_Unit_Hero_Undying || hero == ClassID.CDOTA_Unit_Hero_WitchDoctor ||
-                 hero == ClassID.CDOTA_Unit_Hero_Necrolyte || hero == ClassID.CDOTA_Unit_Hero_Warlock ||
-                 hero == ClassID.CDOTA_Unit_Hero_Rubick || hero == ClassID.CDOTA_Unit_Hero_Huskar ||
-                 hero == ClassID.CDOTA_Unit_Hero_Shadow_Demon) && Utils.SleepCheck("checkIfSupport"))
+            if ((hero == ClassId.CDOTA_Unit_Hero_Oracle || hero == ClassId.CDOTA_Unit_Hero_Winter_Wyvern ||
+                 hero == ClassId.CDOTA_Unit_Hero_KeeperOfTheLight || hero == ClassId.CDOTA_Unit_Hero_Dazzle ||
+                 hero == ClassId.CDOTA_Unit_Hero_Chen || hero == ClassId.CDOTA_Unit_Hero_Enchantress ||
+                 hero == ClassId.CDOTA_Unit_Hero_Legion_Commander || hero == ClassId.CDOTA_Unit_Hero_Abaddon ||
+                 hero == ClassId.CDOTA_Unit_Hero_Omniknight || hero == ClassId.CDOTA_Unit_Hero_Treant ||
+                 hero == ClassId.CDOTA_Unit_Hero_Wisp || hero == ClassId.CDOTA_Unit_Hero_Centaur ||
+                 hero == ClassId.CDOTA_Unit_Hero_Undying || hero == ClassId.CDOTA_Unit_Hero_WitchDoctor ||
+                 hero == ClassId.CDOTA_Unit_Hero_Necrolyte || hero == ClassId.CDOTA_Unit_Hero_Warlock ||
+                 hero == ClassId.CDOTA_Unit_Hero_Rubick || hero == ClassId.CDOTA_Unit_Hero_Huskar ||
+                 hero == ClassId.CDOTA_Unit_Hero_Shadow_Demon) && Utils.SleepCheck("checkIfSupport"))
             {
                 return true;
             }
