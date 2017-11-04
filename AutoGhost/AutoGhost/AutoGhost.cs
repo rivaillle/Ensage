@@ -10,6 +10,7 @@ namespace AutoGhost
 {
     class AutoGhost
     {
+        private static double shopThreshold = 0.45;
         public static bool useGhost(Item ghost, Hero me, IEnumerable<Hero> enemies, bool dodge = false, Hero target = null)
         {
             Hero destiny = null;
@@ -21,11 +22,11 @@ namespace AutoGhost
                 destiny = target;
             }
             var isFacing = false;
-            if(dodge == true && destiny.ClassId != me.ClassId)
+            if (dodge == true && destiny.ClassId != me.ClassId)
             {
                 foreach (var enemy in enemies)
                 {
-                    if(IsFacing(destiny, enemy))
+                    if (IsFacing(destiny, enemy))
                     {
                         Console.WriteLine("oxee");
                         isFacing = true;
@@ -85,7 +86,7 @@ namespace AutoGhost
                         if (manta != null && !manta.CanBeCasted() && manta.Cooldown > 25)
                         {
                             useItem(ghost, target);
-                        }else if(manta == null)
+                        } else if (manta == null)
                         {
                             useItem(ghost, target);
                         }
@@ -105,7 +106,7 @@ namespace AutoGhost
                         Utils.Sleep(1000, ghost.Name);
                         return true;
                     }
-                    else if (isNuker(enemy) && IsFacing(enemy, destiny) && (enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.IsNuke()) || (enemy.IsAttacking() && hasLowHeahth(destiny))) && IsFacing(enemy, destiny) && enemy.Distance2D(destiny) <= 1000)
+                    else if (isNuker(enemy) && IsFacing(enemy, destiny) && (enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && (x.IsNuke() || x.IsDisable())) || (enemy.IsAttacking() && hasLowHeahth(destiny))) && IsFacing(enemy, destiny) && enemy.Distance2D(destiny) <= 1000)
                     {
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
@@ -118,13 +119,208 @@ namespace AutoGhost
 
         private static void useItem(Item item, Hero target)
         {
-            if(target == null)
+            if (target == null)
             {
                 item.UseAbility();
-            }else
+            } else
             {
                 item.UseAbility(target);
             }
+        }
+
+        public static void useWand(Hero me, IEnumerable<Hero> enemies)
+        {
+            Item stick = me.FindItem("item_magic_stick");
+            if(stick == null)
+            {
+                stick = me.FindItem("item_magic_wand");
+            }
+            if (stick != null && me.Health <= me.MaximumHealth * 0.4 && IsInDanger(me, enemies))
+            {
+                if (stick != null && Utils.SleepCheck("Stick") && stick.CurrentCharges > 0 && stick.CanBeCasted())
+                {
+                    stick.UseAbility();
+                    Utils.Sleep(100 + Game.Ping, "Stick");
+                }
+
+            }
+
+        }
+
+        public static void ShopItems(Hero me, bool ultSoft, IEnumerable<Hero> enemies)
+        {
+            return;
+            var ult = me.Spellbook.SpellR;
+            var reliableGold = me.Player.ReliableGold;
+            var unReliableGold = me.Player.UnreliableGold;
+            long gold = reliableGold + unReliableGold;
+            uint cost = 0;
+            bool shouldSaveBuyback = ShouldSaveForBuyback(me, 27);
+            if (shouldSaveBuyback)
+            {
+                return;
+            }
+            if ((ultSoft && !ult.CanBeCasted() || !ultSoft) && Utils.SleepCheck("shop") && IsInDanger(me, enemies) && me.Health < me.MaximumHealth * shopThreshold)
+            {
+                var itemsToBuy = Player.QuickBuyItems.OrderByDescending(x => Ability.GetAbilityDataById(x).Cost);
+                foreach (var itemToBuy in itemsToBuy)
+                {
+                    cost = Ability.GetAbilityDataById(itemToBuy).Cost;
+                    if (gold >= cost)
+                    {
+                        Player.BuyItem(me, itemToBuy);
+                        gold = gold - cost;
+                        Utils.Sleep(500, "shop");
+                    }
+                }
+                cost = Ability.GetAbilityDataById(AbilityId.item_ward_observer).Cost;
+                var wardsCount = GetWardsCount(me, AbilityId.item_ward_observer);
+                if (gold >= cost && wardsCount < 2)
+                {
+                    while (gold >= cost && wardsCount < 2)
+                    {
+                        Player.BuyItem(me, AbilityId.item_ward_observer);
+                        gold = gold - cost;
+                        wardsCount += 1;
+                        Utils.Sleep(500, "shop");
+                    }
+
+                }
+                cost = Ability.GetAbilityDataById(AbilityId.item_ward_sentry).Cost;
+                var sentriesCount = GetWardsCount(me, AbilityId.item_ward_sentry);
+                if (gold >= cost && sentriesCount < 1)
+                {
+                    while (gold >= cost && sentriesCount < 2)
+                    {
+                        Player.BuyItem(me, AbilityId.item_ward_sentry);
+                        gold = gold - cost;
+                        sentriesCount += 1;
+                        Utils.Sleep(500, "shop");
+                    }
+                    gold = gold - cost;
+                    Utils.Sleep(500, "shop");
+                }
+
+                cost = Ability.GetAbilityDataById(AbilityId.item_tpscroll).Cost;
+                var tpCount = GetItemCount(me, AbilityId.item_tpscroll);
+                if (gold >= cost && tpCount < 2)
+                {
+                    while (gold >= cost && tpCount < 2)
+                    {
+                        Player.BuyItem(me, AbilityId.item_tpscroll);
+                        gold = gold - cost;
+                        tpCount += 1;
+                        Utils.Sleep(500, "shop");
+                    }
+                    gold = gold - cost;
+                    Utils.Sleep(500, "shop");
+                }
+            }
+
+        }
+
+        private static uint GetItemCount(Hero me, AbilityId id)
+        {
+            return (me.Inventory.Items.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
+                   + (me.Inventory.Stash.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
+                   + (me.Inventory.Backpack.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0);
+        }
+
+        private static uint GetWardsCount(Hero me, AbilityId id)
+        {
+            var inventoryDispenser = me.Inventory.Items.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
+            var stashDispenser = me.Inventory.Stash.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
+            var backpackDispenser = me.Inventory.Backpack.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
+
+            return GetItemCount(me, id)
+                   + (id == AbilityId.item_ward_observer
+                          ? (inventoryDispenser?.CurrentCharges ?? 0) + (stashDispenser?.CurrentCharges ?? 0)
+                            + (backpackDispenser?.CurrentCharges ?? 0)
+                          : (inventoryDispenser?.SecondaryCharges ?? 0) + (stashDispenser?.SecondaryCharges ?? 0)
+                            + (backpackDispenser?.SecondaryCharges ?? 0));
+        }
+
+        protected static bool ShouldSaveForBuyback(Hero me, float time)
+        {
+            return time > 0 && Game.GameTime / 60 > time
+                   && me.Player.BuybackCooldownTime < 3.8 * me.Level + 5 + me.RespawnTimePenalty;
+        }
+
+        private static bool IsInDanger(Hero ally, IEnumerable<Hero> enemies)
+        {
+            if (ally != null && ally.IsAlive)
+            {
+                               
+                if (enemies.Any())
+                {
+                    foreach (var enemy in enemies)
+                    {
+                        if (ally.Distance2D(enemy) < enemy.AttackRange + 50)
+                        {
+                            return true;
+                        }
+                        if (enemy.Spellbook.Spells.Any(abilities => ally.Distance2D(enemy) < abilities.CastRange + 50))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                var buffs = new[]
+                {
+                    "modifier_item_urn_damage", "modifier_doom_bringer_doom", "modifier_axe_battle_hunger",
+                    "modifier_queenofpain_shadow_strike", "modifier_phoenix_fire_spirit_burn",
+                    "modifier_venomancer_poison_nova", "modifier_venomancer_venomous_gale",
+                    "modifier_silencer_curse_of_the_silent", "modifier_silencer_last_word", "modifier_bane_fiends_grip",
+                    "modifier_earth_spirit_magnetize", "modifier_jakiro_macropyre", "modifier_nerolyte_reapers_scythe",
+                    "modifier_batrider_flaming_lasso", "modifier_sniper_assassinate", "modifier_pudge_dismember",
+                    "modifier_enigma_black_hole_pull", "modifier_disruptor_static_storm", "modifier_sand_king_epicenter",
+                    "modifier_bloodseeker_rupture", "modifier_dual_breath_burn", "modifier_jakiro_liquid_fire_burn",
+                    "modifier_axe_battle_hunger", "modifier_viper_poison_attack",
+                    "modifier_viper_viper_strike", "modifier_bounty_hunter_track"
+                };
+                foreach (var buff in buffs)
+                {
+                    if (ally.HasModifier(buff))
+                    {
+                        //Console.WriteLine("has modifier returning true");
+                        return true;
+                    }
+
+                }
+                var buffs2 = ally.Modifiers.ToList();
+
+                if (buffs2.Any())
+                {
+
+                    foreach (var buff in buffs2)
+                    {
+                        //Console.WriteLine(ally.Name + " has modifier: " + buff.Name);
+                    }
+
+                }
+                else
+                {
+                    //Console.WriteLine(ally.Name + " does not have any buff");
+                }
+                if (ally.IsStunned() || ally.IsSilenced())
+                {
+                    //Console.WriteLine("stun detected!");
+                    return true;
+                }
+                if (ally.IsStunned() ||
+                     ally.IsSilenced() ||
+                     ally.IsHexed() ||
+                     ally.IsRooted()
+                    )
+                {
+                    //Console.WriteLine("stun detected!");
+                    return true;
+                }
+
+                return false;
+            }
+            return false;
         }
 
         public static bool isInDanger2(Hero ally)
@@ -320,11 +516,11 @@ namespace AutoGhost
 
         public static bool isCarry(Hero enemy)
         {
-            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Lycan || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Enchantress
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Razor || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_ChaosKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
                             || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner
                             || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bristleback || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tiny || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Furion || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Spectre || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Alchemist || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bristleback || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bloodseeker || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tiny || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Furion || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Spectre || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Alchemist || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
             {
                 return true;
             }
@@ -340,7 +536,7 @@ namespace AutoGhost
             return false;
         }
 
-        private static bool isNuker(Hero enemy)
+        public static bool isNuker(Hero enemy)
         {
             if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Morphling || enemy.ClassId == ClassId.CDOTA_Unit_Hero_QueenOfPain || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Necrolyte || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Invoker
                 || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Batrider || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_StormSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tinker)
@@ -349,7 +545,7 @@ namespace AutoGhost
             }
             return false;
         }
-        private static bool hasLowHeahth(Hero hero) {
+        public static bool hasLowHeahth(Hero hero) {
             if(hero.Health < hero.MaximumHealth * 40 / 100)
             {
                 return true;

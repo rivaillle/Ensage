@@ -94,7 +94,7 @@ namespace BadassVenom
             {
                 if (Game.IsKeyDown(plagueKey))
                 {
-                    autoPlague = false;
+                    autoPlague = true;
                 }
                 else
                 {
@@ -126,8 +126,6 @@ namespace BadassVenom
             Medallion = me.FindItem("item_medallion_of_courage");
             SolarCrest = me.FindItem("item_solar_crest");
             CrimsonGuard = me.FindItem("item_crimson_guard");
-            Stick = me.FindItem("item_magic_stick");
-            Wand = me.FindItem("item_magic_wand");
             Eul = me.FindItem("item_cyclone");
             Veil = me.FindItem("item_veil_of_discord");
             ghost = me.FindItem("item_ghost");
@@ -138,6 +136,7 @@ namespace BadassVenom
                 Medallion = me.FindItem("item_solar_crest");
             }
             var plagueSpell = me.Spellbook.SpellE;
+            var poisonSpell = me.Spellbook.SpellW;
             var plagueWardLevel = plagueSpell.Level - 1;
             var gale = me.Spellbook.Spell1;
             var nova  = me.Spellbook.SpellR;
@@ -356,7 +355,7 @@ namespace BadassVenom
                     }                    
                 }
 
-                if (plagueSpell.Level > 2 && canPlagueCast(plagueSpell))
+                if ((plagueSpell.Level > 2 || poisonSpell.Level > 2) && canPlagueCast(plagueSpell))
                 {
                     var targetEnemy = enemies.Where(x => x.Distance2D(me) <= plagueRange).MinOrDefault(x => x.Health);
                     
@@ -372,6 +371,18 @@ namespace BadassVenom
                             plagueSpell.UseAbility(targetEnemy.Position);
                             Utils.Sleep(2000, "auto_plague");
                         }
+                    }else if (autoPlague)
+                    {
+                        var enemyCreep = ObjectManager.GetEntitiesFast<Unit>()
+                            .Where(
+                                x =>
+                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Lane || x.ClassId == ClassId.CDOTA_BaseNPC_Tower) && me.Distance2D(x) < 800).FirstOrDefault();
+                        if (enemyCreep != null)
+                        {
+                            plagueSpell.UseAbility(enemyCreep.Position);
+                            Utils.Sleep(2000, "auto_plague");
+                        }
+
                     }
                 }
 
@@ -487,6 +498,8 @@ namespace BadassVenom
             }
 
             AuxItems(me);
+            useWand(me, enemies);
+            ShopItems(me, false, enemies);
             var usedAux = useGhost(ghost, me, enemies);
             useGhost(glimmer, me, enemies, true, me);
             //useGhost(invis, me, enemies, true, null);
@@ -520,7 +533,7 @@ namespace BadassVenom
             }
             if (autoPlague)
             {
-                if (canPlagueCast(plagueSpell))
+                if (false && canPlagueCast(plagueSpell))
                 {
                     plagueSpell.UseAbility(Game.MousePosition);
                     Utils.Sleep(2000, "auto_plague");

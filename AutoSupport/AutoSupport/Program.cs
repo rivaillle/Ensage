@@ -6,6 +6,7 @@ using Ensage.Common;
 using Ensage.Common.Extensions;
 using SharpDX;
 using System.Collections.Generic;
+using static AutoGhost.AutoGhost;
 
 namespace SupportSharp
 {
@@ -17,7 +18,6 @@ namespace SupportSharp
         private static Hero me;
         private static Ability misticAbility;
         private static double glimmerThreshold = 0.6;
-        private static double shopThreshold = 0.45;
         private static double[] misticDamagePerLevel = new double[] { 100, 150, 200, 250 };
         private static Entity fountain;
         private static bool loaded;
@@ -217,20 +217,6 @@ namespace SupportSharp
                     Utils.Sleep(6000, "ult");
                 }
 
-                if (IsInDanger(me) && me.Health <= me.MaximumHealth * 0.4 )
-                {
-                    if(Stick != null && Utils.SleepCheck("Stick") && Stick.CurrentCharges > 0 && Stick.Cooldown > 0)
-                    {
-                        Stick.UseAbility();
-                        Utils.Sleep(100 + Game.Ping, "Stick");
-                    }
-                    if (Wand != null && Utils.SleepCheck("Wand") && Wand.CurrentCharges > 0)
-                    {
-                        Wand.UseAbility();
-                        Utils.Sleep(100 + Game.Ping, "Wand");
-                    }
-
-                }
                 double misticDamage = 0;
                 if (misticAbility.Level > 0)
                 {
@@ -254,7 +240,7 @@ namespace SupportSharp
                                    x =>
                                        x.Team == me.Team && (x.ClassId != me.ClassId) && !x.IsIllusion && x.IsAlive &&
                                        me.Distance2D(x) <= 1050);
-
+                useWand(me, enemies);
                 if (enemies.Any())
                 {
                     foreach (var enemy in enemies)
@@ -333,7 +319,7 @@ namespace SupportSharp
                                 Heal(me, healSpell, new float[] { 100, 150, 200, 250 },
                                 800 + addedRange);
                                 AuxItems(me);
-                                ShopItems(me);
+                                //ShopItems(me, true, enemies);
                             }
                                                      
                             if(offensiveMode)
@@ -655,77 +641,6 @@ namespace SupportSharp
             return false;
         }
 
-        private static void ShopItems(Hero me)
-        {
-            var ult = me.Spellbook.SpellR;
-            var reliableGold =  me.Player.ReliableGold;
-            var unReliableGold = me.Player.UnreliableGold;
-            long gold = reliableGold + unReliableGold;
-            uint cost = 0;
-            bool shouldSaveBuyback = ShouldSaveForBuyback(me, 27);
-            if (shouldSaveBuyback)
-            {
-                return;
-            }
-            if (!ult.CanBeCasted() && Utils.SleepCheck("shop") && IsInDanger(me) && me.Health < me.MaximumHealth * shopThreshold)
-            {
-                var itemsToBuy = Player.QuickBuyItems.OrderByDescending(x => Ability.GetAbilityDataById(x).Cost);
-                foreach (var itemToBuy in itemsToBuy)
-                {
-                    cost = Ability.GetAbilityDataById(itemToBuy).Cost;
-                    if(gold >= cost)
-                    {
-                        Player.BuyItem(me, itemToBuy);
-                        gold = gold - cost;
-                        Utils.Sleep(500, "shop");
-                    }
-                }
-                cost = Ability.GetAbilityDataById(AbilityId.item_ward_observer).Cost;
-                var wardsCount = GetWardsCount(me, AbilityId.item_ward_observer);
-                if (gold >= cost && wardsCount < 2)
-                {
-                    while(gold >= cost && wardsCount < 2)
-                    {
-                        Player.BuyItem(me, AbilityId.item_ward_observer);
-                        gold = gold - cost;
-                        wardsCount += 1;
-                        Utils.Sleep(500, "shop");
-                    }
-                    
-                }
-                cost = Ability.GetAbilityDataById(AbilityId.item_ward_sentry).Cost;
-                var sentriesCount = GetWardsCount(me, AbilityId.item_ward_sentry);
-                if (gold >= cost && sentriesCount < 1)
-                {
-                    while (gold >= cost && sentriesCount < 2)
-                    {
-                        Player.BuyItem(me, AbilityId.item_ward_sentry);
-                        gold = gold - cost;
-                        sentriesCount += 1;
-                        Utils.Sleep(500, "shop");
-                    }
-                    gold = gold - cost;
-                    Utils.Sleep(500, "shop");
-                }
-
-                cost = Ability.GetAbilityDataById(AbilityId.item_tpscroll).Cost;
-                var tpCount = GetItemCount(me, AbilityId.item_tpscroll);
-                if (gold >= cost && tpCount < 2)
-                {
-                    while (gold >= cost && tpCount < 2)
-                    {
-                        Player.BuyItem(me, AbilityId.item_tpscroll);
-                        gold = gold - cost;
-                        tpCount += 1;
-                        Utils.Sleep(500, "shop");
-                    }
-                    gold = gold - cost;
-                    Utils.Sleep(500, "shop");
-                }
-            }
-
-        }
-
         private static void AuxItems(Hero self)
         {
             if (!self.IsInvisible() && self.CanCast())
@@ -762,7 +677,6 @@ namespace SupportSharp
                                         Medallion.UseAbility(enemy);
                                         Utils.Sleep(1000, "solar");
                                     }
-
 
                                 }
                             }
@@ -834,28 +748,6 @@ namespace SupportSharp
             return false;
         }
 
-        private static bool isCarry(Hero enemy)
-        {
-            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Luna || enemy.ClassId == ClassId.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || enemy.ClassId == ClassId.CDOTA_Unit_Hero_LoneDruid || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Gyrocopter || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Shadow_Demon || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
-            {
-                return true;
-            }
-            return false;
-        }
-        private static bool isNuker(Hero enemy)
-        {
-            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Morphling || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Zuus || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Necrolyte || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Invoker
-                || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Batrider || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_StormSpirit)
-            {
-                return true;
-            }
-            return false;
-        }
-
         //Against Slark go BladeMail, SolarCrest, Halberd
         private static bool checkSlarkConditions(Hero enemy)
         {
@@ -877,33 +769,6 @@ namespace SupportSharp
                 return false;
             }
         }
-
-        private static uint GetItemCount(Hero me, AbilityId id)
-        {
-            return (me.Inventory.Items.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
-                   + (me.Inventory.Stash.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0)
-                   + (me.Inventory.Backpack.FirstOrDefault(x => x.GetAbilityId().Equals(id))?.CurrentCharges ?? 0);
-        }
-
-        private static uint GetWardsCount(Hero me, AbilityId id)
-        {
-            var inventoryDispenser = me.Inventory.Items.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
-            var stashDispenser = me.Inventory.Stash.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
-            var backpackDispenser = me.Inventory.Backpack.FirstOrDefault(x => x.Id == AbilityId.item_ward_dispenser);
-
-            return GetItemCount(me, id)
-                   + (id == AbilityId.item_ward_observer
-                          ? (inventoryDispenser?.CurrentCharges ?? 0) + (stashDispenser?.CurrentCharges ?? 0)
-                            + (backpackDispenser?.CurrentCharges ?? 0)
-                          : (inventoryDispenser?.SecondaryCharges ?? 0) + (stashDispenser?.SecondaryCharges ?? 0)
-                            + (backpackDispenser?.SecondaryCharges ?? 0));
-        }
-
-        protected static int BuybackCost(Hero me) { return (int)(100 + Math.Pow(me.Level, 2) * 1.5 + Game.GameTime / 60 * 15); }
-        protected static bool ShouldSaveForBuyback(Hero me, float time)
-        {
-            return time > 0 && Game.GameTime / 60 > time
-                   && me.Player.BuybackCooldownTime < 3.8 * me.Level + 5 + me.RespawnTimePenalty;
-        }
+        
     }
 }

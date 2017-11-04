@@ -4,6 +4,8 @@ using Ensage;
 using Ensage.Common;
 using Ensage.Common.Extensions;
 using Ensage.Common.Menu;
+using Ensage.Common.Objects;
+using Ensage.Common.Objects.UtilityObjects;
 using SharpDX;
 using System.Windows.Input;
 using System.Collections.Generic;
@@ -451,6 +453,7 @@ namespace BristleJR
             if (chase)
             {
                 var enemy = _source.ClosestToMouseTarget(200);
+                Orbwalk(_source, enemy);
                 if (enemy == null)
                 {
                     uint currentHealth = 9999;
@@ -1037,5 +1040,21 @@ namespace BristleJR
 
             return (Math.PI - Math.Abs(Math.Atan2(n1, n2))) < 0.1;
         }
+        private static readonly Dictionary<uint, Orbwalker> OrbDict = new Dictionary<uint, Orbwalker>();
+        private static void Orbwalk(Hero me, Unit target)
+        {
+            if (me == null)
+            {
+                return;
+            }
+            Orbwalker orb;
+            if (!OrbDict.TryGetValue(me.Handle, out orb))
+            {
+                OrbDict.Add(me.Handle, new Orbwalker(me));
+                return;
+            }
+            orb.OrbwalkOn(target, followTarget: true);
+        }
+
     }
 }
