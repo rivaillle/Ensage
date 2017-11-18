@@ -42,12 +42,12 @@ namespace BadassVenom
         private static bool autoChase;
         private static bool hasJugger = false;
         private static uint plagueRange = 850;
-        private static uint galeRange = 850;
+        private static uint galeRange = 800;
         private static bool drawnedExtraRange = false;
         private static bool upgradedTalentRange = false;
         private static Hero me;
         private static ParticleEffect rangeDisplay;
-
+        private static ParticleEffect daggerDisplay;
         private static void OnLoad(object sender, EventArgs e)
         {
             Game.OnUpdate += Game_OnUpdate;
@@ -77,6 +77,12 @@ namespace BadassVenom
                 rangeDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
                 rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
                 rangeDisplay.SetControlPoint(2, new Vector3(875, 255, 0));
+            }
+            if (daggerDisplay == null)
+            {
+                daggerDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
+                daggerDisplay.SetControlPoint(1, new Vector3(0, 255, 255));
+                daggerDisplay.SetControlPoint(2, new Vector3(1200, 255, 0));
             }
             else if (upgradedTalentRange && !drawnedExtraRange)
             {
@@ -172,7 +178,7 @@ namespace BadassVenom
                     }
                 }
             }
-
+            AuxItems(me, enemies, allies);
             foreach (var enemy in enemies)
             {
                 /*
@@ -206,6 +212,7 @@ namespace BadassVenom
                 if (enemy.Distance2D(me) <= 700 && !me.IsInvisible())
                 {
                     var blink = enemy.FindItem("item_blink");
+                    /*
                     if (Eul != null && Utils.SleepCheck("cyclone") && Eul.CanBeCasted())
                     {
                         if (blink != null && blink.Cooldown > 10)
@@ -239,8 +246,8 @@ namespace BadassVenom
                             }
                             
                         }
-                    }
-                    if (blink != null && blink.Cooldown > 8 && (gale.CanBeCasted() || nova.CanBeCasted()))
+                    }*/
+                    if (blink != null && blink.Cooldown > 8 && (Eul == null || (Eul != null && Utils.SleepCheck("cyclone") && Eul.Cooldown < 20)) && (gale.CanBeCasted() || nova.CanBeCasted()))
                     {
                         if (gale.CanBeCasted() && Utils.SleepCheck("venom_gale"))
                         {
@@ -281,7 +288,6 @@ namespace BadassVenom
                     {
                         if (plagueward.Distance2D(ward) < 600 && Utils.SleepCheck(plagueward.Handle.ToString()))
                         {
-                            Console.WriteLine("attacking ward");
                             plagueward.Attack(ward);
                             Utils.Sleep(5000, plagueward.Handle.ToString());
                         }
@@ -497,7 +503,6 @@ namespace BadassVenom
                 }
             }
 
-            AuxItems(me);
             useWand(me, enemies);
             ShopItems(me, false, enemies);
             var usedAux = useGhost(ghost, me, enemies);
@@ -551,52 +556,6 @@ namespace BadassVenom
             }
         }
 
-        private static void AuxItems(Hero self)
-        {
-            if (!self.IsInvisible() && self.CanCast())
-            {
-
-                if (Medallion != null && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
-                {
-                    foreach (var enemy in enemies)
-                    {
-                        if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
-                        {
-                            foreach (var ally in allies)
-                            {
-                                if (IsFacing(enemy, ally))
-                                {
-                                    Medallion.UseAbility(ally);
-                                    Utils.Sleep(1000, "solar");
-                                }
-
-
-                            }
-                        }
-                    }
-                    if (Utils.SleepCheck("solar") && Medallion.CanBeCasted())
-                    {
-                        foreach (var ally in allies)
-                        {
-                            if (isCarry(ally) && ally.IsAttacking())
-                            {
-                                foreach (var enemy in enemies)
-                                {
-                                    if (IsFacing(ally, enemy))
-                                    {
-                                        Medallion.UseAbility(enemy);
-                                        Utils.Sleep(1000, "solar");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-            }
-
-
-        }
         private static bool canPlagueCast(Ability spell)
         {
             return spell != null && spell.CanBeCasted() && Utils.SleepCheck("auto_plague") && spell.Level > 0 && !me.IsInvisible();

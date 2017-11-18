@@ -101,7 +101,7 @@ namespace SupportSharp
                 else if (me.HasModifier("modifier_item_aether_lens") && rangeWithAether == false)
                 {
                     Console.WriteLine("aether");
-                    rangeDisplay.SetControlPoint(2, new Vector3(550 + 220, 255, 0));
+                    rangeDisplay.SetControlPoint(2, new Vector3(550 + 250, 255, 0));
                     rangeDisplay.Restart();
                     rangeWithAether = true;
 
@@ -225,7 +225,7 @@ namespace SupportSharp
                 var extraRange = 0;
                 if (me.HasModifier("modifier_item_aether_lens"))
                 {
-                    extraRange = 220;
+                    extraRange = 250;
                 }
                 enemies =
                                     ObjectManager.GetEntitiesFast<Hero>()
@@ -251,9 +251,9 @@ namespace SupportSharp
                             double totalDamage = misticDamage - misticDamage * enemyResistence;
                             if (me.HasModifier("modifier_item_aether_lens"))
                             {
-                                totalDamage += totalDamage * 0.05;
+                                //totalDamage += totalDamage * 0.05;
                             }
-                            totalDamage += totalDamage * (me.Intelligence % 16) / 100;
+                            totalDamage += totalDamage * (me.Intelligence % 14) / 100;
                             if (totalDamage >= (enemy.Health + enemy.HealthRegeneration * 1))
                             {
                                 CastHeal(misticAbility, enemy);
@@ -311,14 +311,14 @@ namespace SupportSharp
                             var healSpell = me.Spellbook.SpellQ;
                             if (me.HasModifier("modifier_item_aether_lens"))
                             {
-                                addedRange += 220;
+                                addedRange += 250;
                             }
                             Save(me, me.Spellbook.SpellW, 580, me.Spellbook.SpellW.CastRange + addedRange);
                             if (!offensiveMode)
                             {
                                 Heal(me, healSpell, new float[] { 100, 150, 200, 250 },
                                 800 + addedRange);
-                                AuxItems(me);
+                                AuxItems(me, enemies, allies);
                                 //ShopItems(me, true, enemies);
                             }
                                                      
@@ -639,83 +639,6 @@ namespace SupportSharp
                 return false;
             }
             return false;
-        }
-
-        private static void AuxItems(Hero self)
-        {
-            if (!self.IsInvisible() && self.CanCast())
-            {
-
-                if (Medallion != null && Utils.SleepCheck("solar") && Medallion.CanBeCasted())
-                {
-                    foreach (var enemy in enemies)
-                    {
-                        if (isCarry(enemy) && enemy.IsAttacking() || (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase && x.AbilityType == AbilityType.Ultimate)))
-                        {
-                            foreach (var ally in allies)
-                            {
-                                if (IsFacing(enemy, ally))
-                                {
-                                    Medallion.UseAbility(ally);
-                                    Utils.Sleep(1000, "solar");
-                                }
-
-
-                            }
-                        }
-                    }
-                    if (Utils.SleepCheck("solar") && Medallion.CanBeCasted())
-                    {
-                        foreach (var ally in allies)
-                        {
-                            if (isCarry(ally) && ally.IsAttacking())
-                            {
-                                foreach (var enemy in enemies)
-                                {
-                                    if (IsFacing(ally, enemy))
-                                    {
-                                        Medallion.UseAbility(enemy);
-                                        Utils.Sleep(1000, "solar");
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (GlimmerCape != null && Utils.SleepCheck("glimmer") && GlimmerCape.CanBeCasted())
-                {
-                    foreach (var enemy in enemies)
-                    {
-                        if (isNuker(enemy) && enemy.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
-                        {
-                            if (IsFacing(enemy, self) && enemy.Distance2D(self) <= 1000 && !self.IsAttacking())
-                            {
-                                GlimmerCape.UseAbility(self);
-                                Utils.Sleep(1000, "glimmer");
-                            }
-                            else if (allies.Any())
-                            {
-                                foreach (var ally in allies)
-                                {
-                                    if (IsFacing(enemy, ally) && !ally.IsMagicImmune() && enemy.Distance2D(ally) <= 1000 && !ally.IsAttacking())
-                                    {
-                                        GlimmerCape.UseAbility(ally);
-                                        Utils.Sleep(1000, "glimmer");
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-
-
-                }
-
-            }
-
-
         }
 
         private static bool Support(ClassId hero)

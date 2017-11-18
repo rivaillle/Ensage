@@ -39,8 +39,8 @@
     <Reference Include="Ensage.Common">
       <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.Common.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.dll</HintPath>
+    <Reference Include="Ensage.SDK">
+      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.SDK.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
       <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
