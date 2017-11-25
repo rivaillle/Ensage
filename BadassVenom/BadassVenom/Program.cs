@@ -84,6 +84,7 @@ namespace BadassVenom
                 daggerDisplay.SetControlPoint(1, new Vector3(0, 255, 255));
                 daggerDisplay.SetControlPoint(2, new Vector3(1200, 255, 0));
             }
+            /*
             else if (upgradedTalentRange && !drawnedExtraRange)
             {
                 rangeDisplay.SetControlPoint(2, new Vector3(875 + 150, 255, 0));
@@ -91,6 +92,7 @@ namespace BadassVenom
                 drawnedExtraRange = true;
 
             }
+            */
 
         }
 
@@ -162,8 +164,7 @@ namespace BadassVenom
                                         ObjectManager.GetEntitiesFast<Unit>()
                                             .Where(
                                                 x =>
-                                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_BaseNPC_Additive) &&
-                                                    me.Distance2D(x) <= 1400)
+                                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_BaseNPC_Additive))
                                             .FirstOrDefault();
                 if (healingWard != null)
                 {
@@ -173,7 +174,7 @@ namespace BadassVenom
                         {
                             plagueward.Attack(healingWard);
                             Utils.Sleep(1200, plagueward.Handle.ToString());
-                            Utils.Sleep(5000, "healing");
+                            Utils.Sleep(3000, "healing");
                         }
                     }
                 }

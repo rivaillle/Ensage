@@ -29,14 +29,12 @@ namespace AutoGhost
                 {
                     if (IsFacing(destiny, enemy))
                     {
-                        Console.WriteLine("oxee");
                         isFacing = true;
                         return false;
                     }
                 }
                 if (isFacing)
                 {
-                    Console.WriteLine("oxee2");
                     return false;
                 }
             }
@@ -75,7 +73,6 @@ namespace AutoGhost
                     }
                     else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut && enemy.Distance2D(destiny) < 400 && Utils.SleepCheck("omnislash_dodged_" + destiny.ClassId) && (enemy.Spellbook.SpellR.IsInAbilityPhase || enemy.HasModifier("modifier_juggernaut_omnislash")))
                     {
-                        Console.WriteLine("dodge jugg with" + ghost.Name);
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
                         Utils.Sleep(5000, "omnislash_dodged_" + destiny.ClassId);
@@ -102,7 +99,6 @@ namespace AutoGhost
                     }
                     else if (isCarry(enemy) && enemy.Distance2D(destiny) < enemy.AttackRange && IsFacing(enemy, destiny) && (enemy.IsAttacking() || destiny.Health < destiny.MaximumHealth * 20 / 100) && (destiny.Health < destiny.MaximumHealth * 40 / 100 || isCarryMad(enemy)))
                     {
-                        Console.WriteLine("hahaha");
                         useItem(ghost, target);
                         Utils.Sleep(1000, ghost.Name);
                         return true;
@@ -280,6 +276,7 @@ namespace AutoGhost
                     "modifier_axe_battle_hunger", "modifier_viper_poison_attack",
                     "modifier_viper_viper_strike", "modifier_bounty_hunter_track"
                 };
+                /*
                 foreach (var buff in buffs)
                 {
                     if (ally.HasModifier(buff))
@@ -304,6 +301,7 @@ namespace AutoGhost
                 {
                     //Console.WriteLine(ally.Name + " does not have any buff");
                 }
+                */
                 if (ally.IsStunned() || ally.IsSilenced())
                 {
                     //Console.WriteLine("stun detected!");
@@ -620,7 +618,7 @@ namespace AutoGhost
         public static bool isCarry(Hero enemy)
         {
             if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Lycan || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Slark || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sven || enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Sniper || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Enchantress
-                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Razor || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_ChaosKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
+                            || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TemplarAssassin || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Clinkz || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Razor || enemy.ClassId == ClassId.CDOTA_Unit_Hero_DragonKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_ChaosKnight || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomLancer|| enemy.ClassId == ClassId.CDOTA_Unit_Hero_DrowRanger || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Legion_Commander
                             || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Life_Stealer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_MonkeyKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Ursa || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Weaver || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Windrunner
                             || enemy.ClassId == ClassId.CDOTA_Unit_Hero_SkeletonKing || enemy.ClassId == ClassId.CDOTA_Unit_Hero_EmberSpirit || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Riki || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Terrorblade || enemy.ClassId == ClassId.CDOTA_Unit_Hero_TrollWarlord || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Huskar || enemy.ClassId == ClassId.CDOTA_Unit_Hero_PhantomAssassin
                             || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Obsidian_Destroyer || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Pangolier || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bristleback || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Bloodseeker || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Tiny || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Furion || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Spectre || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Juggernaut || enemy.ClassId == ClassId.CDOTA_Unit_Hero_Alchemist || enemy.ClassId == ClassId.CDOTA_Unit_Hero_FacelessVoid)
@@ -660,7 +658,6 @@ namespace AutoGhost
         {
             if(fountain == null)
             {
-                Console.WriteLine("loading fountain");
                 fountain = ObjectManager.GetEntitiesFast<Unit>()
                           .FirstOrDefault(
                               x => x.Team == me.Team
