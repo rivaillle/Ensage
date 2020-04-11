@@ -17,7 +17,6 @@ namespace AutoItems
         private static void OnLoad(object sender, EventArgs e)
         {
             Game.OnUpdate += Game_OnUpdate;
-            Player.OnExecuteOrder += OnExecuteOrder;
         }
 
         static void Main(string[] args)
@@ -53,13 +52,9 @@ namespace AutoItems
                                                 me.Distance2D(x) <= 1050)
                                         .ToList();
             var glimmer = me.FindItem("item_glimmer_cape");
-            if (!isInDanger2(me))
-            {
-                AuxItems(me, enemies, allies);
-            }else
-            {
-                useGhost(glimmer, me, enemies, true, me);
-            }
+            AuxItems(me, enemies, allies);
+            useGhost(glimmer, me, enemies, true, me);
+
             useGhost(ghost, me, enemies);
             if(glimmer != null)
             {
@@ -69,26 +64,6 @@ namespace AutoItems
                     {
                         useGhost(glimmer, me, enemies, true, ally);
                     }
-                }
-            }
-        }
-
-        public static void OnExecuteOrder(Player sender, ExecuteOrderEventArgs args)
-        {
-            if (args.OrderId == OrderId.AttackTarget)
-            {
-                var target = args.Target as Unit;
-                if (target != null && target.IsAlive && !target.IsMagicImmune() && target.ClassId != ClassId.CDOTA_BaseNPC_Tower && !target.IsIllusion && target.ClassId != ClassId.CDOTA_BaseNPC_Creep_Lane)
-                {
-                    var medallion = me.FindItem("item_medallion_of_courage");
-                    if (medallion == null)
-                    {
-                        medallion = me.FindItem("item_solar_crest");
-                    }
-                    if(medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted()){
-                        medallion.UseAbility(target);
-                    }
-
                 }
             }
         }

@@ -551,18 +551,6 @@ namespace AutoGhost
                             }
 
                         }
-                        if (myBlink != null && Utils.SleepCheck("myBlink") && myBlink.CanBeCasted() && !me.IsInvisible())
-                        {
-                            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage)
-                            {
-                                if (enemy.Distance2D(me) < 300)
-                                {
-                                    var blinkUnit = getFountain(me);
-                                    myBlink.UseAbility(blinkUnit.NetworkPosition);
-                                    Utils.Sleep(1000, "myBlink");
-                                }
-                            }
-                        }
                         if (staff != null && Utils.SleepCheck("staff") && staff.CanBeCasted() && !me.IsInvisible())
                         {
                             if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_AntiMage)

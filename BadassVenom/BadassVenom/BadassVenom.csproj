@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{87DD6537-637D-4318-87E5-BC7FCB361C02}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BadassVenom</RootNamespace>
     <AssemblyName>BadassVenom</AssemblyName>
@@ -32,20 +32,27 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ensage">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.Common">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.Common.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.Common.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.SDK">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.SDK.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.SDK.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -59,8 +66,9 @@
     <Compile Include="..\..\AutoGhost\AutoGhost\AutoGhost.cs">
       <Link>AutoGhost.cs</Link>
     </Compile>
+    <Compile Include="plaguecontrol.cs" />
     <Compile Include="PlagueTarget.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="BadassVenom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -34,19 +34,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ensage">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.Common">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.Common.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.Common.dll</HintPath>
     </Reference>
     <Reference Include="Ensage.SDK">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\Ensage.SDK.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\Ensage.SDK.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Mathematics">
-      <HintPath>C:\Users\junio\Desktop\heheh\References\SharpDX.Mathematics.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Ensage\References\SharpDX.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

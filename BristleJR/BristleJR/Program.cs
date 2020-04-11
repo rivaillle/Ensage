@@ -20,7 +20,7 @@ namespace BristleJR
         private static Item abyssal, blink, solar, medallion, pipe, halberd, atos, dust, Stick, Wand, Crimson, Quelling, bladeMail;
         private static Ensage.Items.PowerTreads threads;
         private const Key triggerKey = Key.B;
-        private const Key chaseKey = Key.G;
+        private const Key chaseKey = Key.F;
         private static bool trigger, chase;
         private static readonly uint[] Quilldmg = { 20, 40, 60, 80 };
         private static readonly Menu Menu = new Menu("Bristleback", "bristle", true);
@@ -90,8 +90,8 @@ namespace BristleJR
             }
 
             var _enemy = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.IsVisible && hero.Team != _source.Team);
-            var _creep = ObjectManager.GetEntitiesFast<Creep>().Where(x => (x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Lane || x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Siege) && x.IsAlive && x.IsSpawned && x.IsVisible).ToList();
-
+            var _creep = ObjectManager.GetEntitiesFast<Unit>().Where(x => x.IsAlive && x.Distance2D(_source) <= Quill.CastRange && x.IsSpawned && x.IsVisible && (x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Lane || x.ClassId == ClassId.CDOTA_BaseNPC_Creep_Siege));
+            var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassId != _source.ClassId && hero.Team == _source.Team);
             if (Quill == null)
             {
                 Quill = _source.Spellbook.Spell2;
@@ -171,25 +171,41 @@ namespace BristleJR
                 }
 
             }
-            useGhost(medallion, _source, _enemy, true, null);
+            AuxItems(_source, _enemy, allies);
             var selectedIndex = Menu.Item("Quill").GetValue<StringList>().SelectedIndex;
             if (selectedIndex == 3 && Quill.CanBeCasted() && _source.CanCast() && Utils.SleepCheck("quill") && !_source.IsChanneling() && !_source.IsInvisible())
             {
-
-                foreach (var x in _creep)
+                if (_creep.Any())
                 {
-                    if (x.Team == _source.GetEnemyTeam() && x.Health > 0 && x.Health < (Quilldmg[Quill.Level - 1] * (1 - x.DamageResist) + 20) && _source.Distance2D(x) < Quill.CastRange && Utils.SleepCheck("quill"))
+                    foreach (var creep in _creep)
+                    {
+                        if (creep.Team == _source.GetEnemyTeam() && creep.Health > 0 && creep.Health < (Quilldmg[Quill.Level - 1] * (1 - creep.DamageResist) + 20) && _source.Distance2D(creep) < Quill.CastRange && Utils.SleepCheck("quill"))
+                        {
+                            useAbility(Quill);
+                            Utils.Sleep(150 + Game.Ping, "quill");
+                        }
+                     }
+                }
+
+                
+            }
+            else if (selectedIndex == 0 && Quill.CanBeCasted() && _source.CanCast() && Utils.SleepCheck("quill") && !_source.IsChanneling() && !_source.IsInvisible())
+            {
+                foreach (var enemy in _enemy)
+                {
+                    if (Utils.SleepCheck("quill") && _source.Distance2D(enemy) < Quill.CastRange)
                     {
                         useAbility(Quill);
                         Utils.Sleep(150 + Game.Ping, "quill");
                     }
                 }
-            }
-            else if (selectedIndex == 0 && Quill.CanBeCasted() && _source.CanCast() && Utils.SleepCheck("quill") && !_source.IsChanneling() && !_source.IsInvisible())
-            {
-                /*
-                useAbility(Quill);
-                Utils.Sleep(150 + Game.Ping, "quill");*/
+
+                if (_creep.Any())
+                {
+                    useAbility(Quill);
+                    Utils.Sleep(150 + Game.Ping, "quill");
+                }
+
             }
             else if (selectedIndex == 4 && Quill.CanBeCasted() && _source.CanCast() && Utils.SleepCheck("quill") && !_source.IsChanneling() && !_source.IsInvisible())
             {
@@ -269,7 +285,6 @@ namespace BristleJR
             */
             if (Crimson != null || bladeMail != null || halberd != null || medallion != null || abyssal != null)
             {
-                var allies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.ClassId != _source.ClassId && hero.Team == _source.Team);
                 foreach (var enemy in _enemy)
                 {
                     dealWithAntiMage(allies, enemy);
@@ -453,7 +468,7 @@ namespace BristleJR
             if (chase)
             {
                 var enemy = _source.ClosestToMouseTarget(200);
-                Orbwalk(_source, enemy);
+               // Orbwalk(_source, enemy);
                 if (enemy == null)
                 {
                     uint currentHealth = 9999;
@@ -492,7 +507,6 @@ namespace BristleJR
                         }
 
                     }
-                    Orbwalking.Orbwalk(enemy, 0, 0, false, true);
                     if (medallion != null && Utils.SleepCheck("solar") && medallion.CanBeCasted() && !_source.IsAttacking() && enemy.ClassId != ClassId.CDOTA_Unit_Hero_Slark)
                     {
                         var isSafe = true;
@@ -516,7 +530,7 @@ namespace BristleJR
                 }
                 else
                 {
-                    Orbwalking.Orbwalk(null);
+                    //Orbwalking.Orbwalk(null);
                     // _source.Move(Game.MousePosition);
                 }
                 if (Quill.CanBeCasted() && Utils.SleepCheck("quill"))
@@ -549,13 +563,14 @@ namespace BristleJR
         {
             if (ability.CanBeCasted())
             {
-                setThreads(_source, threads, Ensage.Attribute.Intelligence);
+                //setThreads(_source, threads, Ensage.Attribute.Intelligence);
                 ability.UseAbility();
             }
         }
 
         public static void setThreads(Hero me, Ensage.Items.PowerTreads powerTreads, Ensage.Attribute attribute)
         {
+            return;
             if (powerTreads != null && me.Health >= me.MaximumHealth * threadsSwitchThreshold)
             {
 
@@ -597,8 +612,9 @@ namespace BristleJR
                         break;
                 }
 
-                Utils.Sleep(150 + Game.Ping, "threads");
             }
+            Utils.Sleep(150 + Game.Ping, "threads");
+
         }
 
         private static bool IsInDanger(Hero ally, IEnumerable<Hero> enemies)
@@ -727,6 +743,11 @@ namespace BristleJR
         }
         private static void Player_OnExecuteAction(Player sender, ExecuteOrderEventArgs args)
         {
+            return;
+            if (!Utils.SleepCheck("threads"))
+            {
+                return;
+            }
             var me = sender.Hero;
             if (me.IsInvisible())
             {
@@ -748,6 +769,7 @@ namespace BristleJR
                     {
                         if (me.Health >= me.MaximumHealth * threadsSwitchThreshold)
                         {
+                            Utils.Sleep(150, "threads");
                             setThreads(me, threads, Ensage.Attribute.Intelligence);
                         }
                     }

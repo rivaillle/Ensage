@@ -1,18 +1,34 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using System;
+using System.ComponentModel.Composition;
+using System.Reflection;
 using System.Linq;
 using Ensage;
+using Ensage.SDK.Helpers;
+using Ensage.SDK.Input;
+using Ensage.SDK.Inventory;
+using Ensage.SDK.Menu;
+using Ensage.SDK.Abilities;
+using Ensage.SDK.Service;
+using Ensage.SDK.Service.Metadata;
 using Ensage.Common;
 using Ensage.Common.Extensions;
 using Ensage.Common.Menu;
 using System.Windows.Input;
 using System.Collections.Generic;
 using SharpDX;
+
 using static AutoGhost.AutoGhost;
 using NameValuePair = System.Collections.Generic.KeyValuePair<string, string>;
 
 namespace BadassVenom
 {
-    internal class Program
+    class PlagueControl
     {
         private static uint[] PlagueWardDamage = { 15, 24, 33, 42 };
         private static Item Veil,
@@ -41,6 +57,8 @@ namespace BadassVenom
         private static bool autoPlague;
         private static bool autoChase;
         private static bool hasJugger = false;
+        private static bool hasShaman = false;
+        private static bool hasClock = false;
         private static uint plagueRange = 850;
         private static uint galeRange = 800;
         private static bool drawnedExtraRange = false;
@@ -48,89 +66,16 @@ namespace BadassVenom
         private static Hero me;
         private static ParticleEffect rangeDisplay;
         private static ParticleEffect daggerDisplay;
-        private static void OnLoad(object sender, EventArgs e)
+        private static float towerHealthPercent = 0.35f;
+        private static int plagueAttackRange = 600;
+        private static int plagueDistanceRange = 850;
+        public static void OnUpdate()
         {
-            Game.OnUpdate += Game_OnUpdate;
-            Game.OnWndProc += Game_OnWndProc;
-            Drawing.OnDraw += Game_OnDraw;
-        }
-
-        static void Main(string[] args)
-        {
-            Events.OnLoad += OnLoad;
-        }
-
-        private static void Game_OnDraw(EventArgs args)
-        {
-            if (me == null)
-            {
-                return;
-            }
-
-            if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame)
-            {
-                return;
-            }
-
-            if (rangeDisplay == null)
-            {
-                rangeDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-                rangeDisplay.SetControlPoint(1, new Vector3(255, 255, 255));
-                rangeDisplay.SetControlPoint(2, new Vector3(875, 255, 0));
-            }
-            if (daggerDisplay == null)
-            {
-                daggerDisplay = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-                daggerDisplay.SetControlPoint(1, new Vector3(0, 255, 255));
-                daggerDisplay.SetControlPoint(2, new Vector3(1200, 255, 0));
-            }
-            /*
-            else if (upgradedTalentRange && !drawnedExtraRange)
-            {
-                rangeDisplay.SetControlPoint(2, new Vector3(875 + 150, 255, 0));
-                rangeDisplay.Restart();
-                drawnedExtraRange = true;
-
-            }
-            */
-
-        }
-
-        private static void Game_OnWndProc(WndEventArgs args)
-        {
-            if (!Game.IsChatOpen)
-            {
-                if (Game.IsKeyDown(plagueKey))
-                {
-                    autoPlague = true;
-                }
-                else
-                {
-                    autoPlague = false;
-                }
-
-                if (Game.IsKeyDown(chaseKey))
-                {
-                    autoChase = false;
-                }
-                else
-                {
-                    autoChase = false;
-                }
-
-            }
-        }
-
-        public static void Game_OnUpdate(EventArgs args)
-        {
-            if (!Game.IsInGame)
-                return;
-
             me = ObjectManager.LocalHero;
             if (me == null || me.ClassId != ClassId.CDOTA_Unit_Hero_Venomancer || !Utils.SleepCheck("rest_tick") || !me.IsVisible)
                 return;
 
-            Utils.Sleep(75, "rest_tick");
+            Utils.Sleep(40, "rest_tick");
             Medallion = me.FindItem("item_medallion_of_courage");
             SolarCrest = me.FindItem("item_solar_crest");
             CrimsonGuard = me.FindItem("item_crimson_guard");
@@ -139,6 +84,8 @@ namespace BadassVenom
             ghost = me.FindItem("item_ghost");
             glimmer = me.FindItem("item_glimmer_cape");
             invis = me.FindItem("item_invis_sword");
+            var sleepAutoPlague = false;
+
             if (Medallion == null)
             {
                 Medallion = me.FindItem("item_solar_crest");
@@ -147,8 +94,8 @@ namespace BadassVenom
             var poisonSpell = me.Spellbook.SpellW;
             var plagueWardLevel = plagueSpell.Level - 1;
             var gale = me.Spellbook.Spell1;
-            var nova  = me.Spellbook.SpellR;
-            
+            var nova = me.Spellbook.SpellR;
+
             enemies = ObjectManager.GetEntitiesFast<Hero>().Where(hero => hero.IsAlive && !hero.IsIllusion && hero.IsVisible && hero.Team == me.GetEnemyTeam()).ToList();
             //var creeps = ObjectManager.GetEntitiesFast<Creep>().Where(creep => (creep.ClassId == ClassId.CDOTA_BaseNPC_Creep_Lane || creep.ClassId == ClassId.CDOTA_BaseNPC_Creep_Siege) && creep.IsAlive && creep.IsVisible && creep.IsSpawned).ToList();
             allies = ObjectManager.GetEntitiesFast<Hero>()
@@ -164,30 +111,116 @@ namespace BadassVenom
                                         ObjectManager.GetEntitiesFast<Unit>()
                                             .Where(
                                                 x =>
-                                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_BaseNPC_Additive))
+                                                    x.Team != me.Team && x.IsAlive && (x.ClassId == ClassId.CDOTA_BaseNPC_Additive))
                                             .FirstOrDefault();
                 if (healingWard != null)
                 {
+                    if (healingWard.Distance2D(me) < 2000)
+                    {
+                        sleepAutoPlague = true;
+                    }
                     foreach (var plagueward in plaguewards)
                     {
                         if (plagueward.Distance2D(healingWard) < 600 && Utils.SleepCheck("healing") && Utils.SleepCheck(plagueward.Handle.ToString()))
                         {
                             plagueward.Attack(healingWard);
                             Utils.Sleep(1200, plagueward.Handle.ToString());
-                            Utils.Sleep(3000, "healing");
+                            Utils.Sleep(1000, "healing");
                         }
+                    }
+                    if (healingWard.Distance2D(me) <= 850 && canPlagueCast(plagueSpell))
+                    {
+                        plagueSpell.UseAbility(healingWard.Position);
+                        Utils.Sleep(2000, "auto_plague");
+
+                    }
+                    else if (healingWard.Distance2D(me) <= plagueAttackRange + plagueDistanceRange && canPlagueCast(plagueSpell))
+                    {
+                        plagueSpell.UseAbility(getPlagueMaximumDistance(healingWard));
+                        Utils.Sleep(2000, "auto_plague");
                     }
                 }
             }
             AuxItems(me, enemies, allies);
+            if (hasShaman)
+            {
+                var shamanWards =
+                                      ObjectManager.GetEntitiesFast<Unit>()
+                                          .Where(
+                                              x =>
+                                                  x.Team != me.Team && x.IsAlive && (x.ClassId == ClassId.CDOTA_BaseNPC_ShadowShaman_SerpentWard))
+                                          .ToList();
+                if (shamanWards.Any())
+                {
+                    foreach (var ward in shamanWards.OrderBy(x => x.Health))
+                    {
+                        foreach (var plagueward in plaguewards)
+                        {
+                            if (plagueward.Distance2D(ward) < 600 && Utils.SleepCheck(plagueward.Handle.ToString()))
+                            {
+                                //Console.WriteLine(DateTime.Now + "----" + Utils.SleepCheck(plagueward.Handle.ToString()));
+                                addPlagueTarget(plagueward, ward);
+                                Utils.Sleep(800, plagueward.Handle.ToString());
+                            }
+                        }
+                        if (ward.Distance2D(me) <= 850 && canPlagueCast(plagueSpell))
+                        {
+                            plagueSpell.UseAbility(ward.Position);
+                            Utils.Sleep(2000, "auto_plague");
+
+                        }else if(ward.Distance2D(me) <= 850 + 600 && canPlagueCast(plagueSpell))
+                        {
+                            plagueSpell.UseAbility(getPlagueMaximumDistance(ward));
+                            Utils.Sleep(2000, "auto_plague");
+                        }
+                    }
+                    sleepAutoPlague = true;
+
+                }
+            }
+            if (hasClock)
+            {
+                var clockGears =
+                                      ObjectManager.GetEntitiesFast<Unit>()
+                                          .Where(
+                                              x =>
+                                                  x.IsAlive && x.IsVisible && (x.ClassId == ClassId.CDOTA_BaseNPC_Additive))
+                                          .ToList();
+                if (clockGears.Any())
+                {
+                    foreach (var ward in clockGears)
+                    {
+                        foreach (var plagueward in plaguewards)
+                        {
+                            if (plagueward.Distance2D(ward) < 600 && Utils.SleepCheck(plagueward.Handle.ToString()))
+                            {
+                                //Console.WriteLine(DateTime.Now + "----" + Utils.SleepCheck(plagueward.Handle.ToString()));
+                                plagueward.Attack(ward);
+                                Utils.Sleep(800, plagueward.Handle.ToString());
+                            }
+                        }
+                        if (ward.Distance2D(me) <= 850 && canPlagueCast(plagueSpell))
+                        {
+                            plagueSpell.UseAbility(ward.Position);
+                            Utils.Sleep(2000, "auto_plague");
+
+                        }
+                        else if (ward.Distance2D(me) <= plagueAttackRange + plagueDistanceRange && canPlagueCast(plagueSpell))
+                        {
+                            plagueSpell.UseAbility(getPlagueMaximumDistance(ward));
+                            Utils.Sleep(2000, "auto_plague");
+                        }
+                    }
+                    sleepAutoPlague = true;
+
+                }
+            }
+           
             foreach (var enemy in enemies)
             {
-                if (!Utils.SleepCheck("sting_" + enemy.ClassId))
-                {
-                    continue;
-                }
+               
                 /*
-                Console.WriteLine("OXE");
+                
                 var modifiers = enemy.Modifiers.ToList();
                 foreach(var modifier in modifiers)
                 {
@@ -198,20 +231,28 @@ namespace BadassVenom
                 {
                     hasJugger = true;
                 }
+                else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_ShadowShaman)
+                {
+                    hasShaman = true;
+                }
+                else if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Rattletrap)
+                {
+                    hasClock = true;
+                }
                 if (enemy.Modifiers.FirstOrDefault(modifier => modifier.Name == "modifier_venomancer_poison_sting_ward") == null && enemy.Health > 0)
                 {
                     foreach (var plagueward in plaguewards)
                     {
                         if (enemy.Distance2D(plagueward) < 600 && Utils.SleepCheck(plagueward.Handle.ToString()))
                         {
+                            //Console.WriteLine("attacking because no modifier");
                             addPlagueTarget(plagueward, enemy);
                             Utils.Sleep(1000, plagueward.Handle.ToString());
-                            Utils.Sleep(2000, "sting_"+enemy.ClassId);
                         }
                     }
                 }
                 var blink = enemy.FindItem("item_blink");
-                if(blink != null && (blink.CanBeCasted() || blink.Cooldown < 1))
+                if (blink != null && (blink.CanBeCasted() || blink.Cooldown < 1))
                 {
                     foreach (var plagueward in plaguewards)
                     {
@@ -219,7 +260,7 @@ namespace BadassVenom
                         {
                             addPlagueTarget(plagueward, enemy);
                             Utils.Sleep(1000, plagueward.Handle.ToString());
-                            Utils.Sleep(2000, "sting_" + enemy.ClassId);
+                            //Utils.Sleep(2000, "sting_" + enemy.ClassId);
                         }
                     }
                 }
@@ -257,12 +298,12 @@ namespace BadassVenom
                     }
                 }
             }
-
+            
             var wards =
                                         ObjectManager.GetEntitiesFast<Unit>()
                                             .Where(
                                                 x =>
-                                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_NPC_Observer_Ward || x.ClassId == ClassId.CDOTA_NPC_Observer_Ward_TrueSight))
+                                                    x.Team != me.Team && x.IsAlive &&(x.ClassId == ClassId.CDOTA_NPC_Observer_Ward || x.ClassId == ClassId.CDOTA_NPC_Observer_Ward_TrueSight))
                                             .ToList();
             if (wards.Any())
             {
@@ -276,15 +317,21 @@ namespace BadassVenom
                             Utils.Sleep(5000, plagueward.Handle.ToString());
                         }
                     }
+                    if(ward.Distance2D(me) <= 850 && canPlagueCast(plagueSpell))
+                    {
+                        plagueSpell.UseAbility(ward.Position);
+                        Utils.Sleep(2000, "auto_plague");
+
+                    }
                 }
 
             }
-
+            
             var traps =
                         ObjectManager.GetEntitiesFast<Unit>()
                             .Where(
                                 x =>
-                                    x.Team != me.Team && (x.ClassId == ClassId.CDOTA_NPC_TechiesMines) &&
+                                    x.Team != me.Team && x.IsAlive && (x.ClassId == ClassId.CDOTA_NPC_TechiesMines) &&
                                     me.Distance2D(x) <= 1400)
                             .ToList();
 
@@ -297,14 +344,42 @@ namespace BadassVenom
                         if (plagueward.Distance2D(trap) < 600 && Utils.SleepCheck(plagueward.Handle.ToString()))
                         {
                             plagueward.Attack(trap);
-                            Utils.Sleep(1000, plagueward.Handle.ToString());
+                            Utils.Sleep(2000, plagueward.Handle.ToString());
                         }
+                    }
+                    if (trap.Distance2D(me) <= 850 && canPlagueCast(plagueSpell))
+                    {
+                        plagueSpell.UseAbility(trap.Position);
+                        Utils.Sleep(2000, "auto_plague");
                     }
                 }
 
             }
+
+            var enemyTowers = ObjectManager.GetEntitiesFast<Unit>()
+                           .Where(
+                               x => 
+                                   x.Team != me.Team && x.IsVisible && x.IsAlive && (x.ClassId == ClassId.CDOTA_BaseNPC_Tower)
+                                   ).ToList();
+
+            foreach (var enemyTower in enemyTowers)
+            {
+                foreach (var plagueward in plaguewards)
+                {
+                    if (Utils.SleepCheck(plagueward.Handle.ToString()) && plagueward.Distance2D(enemyTower) < 600 && enemyTower.Health < 601)
+                    {
+                        plagueward.Attack(enemyTower);
+                        Utils.Sleep(2000, plagueward.Handle.ToString());
+                    }
+                }
+            }
             if (plagueSpell.Level > 0)
             {
+
+                foreach (var plagueTarget in plagueTargets)
+                {
+                   // Console.WriteLine("hoho" + plagueTarget.Id + " com value " + plagueTarget.Value);
+                }
 
                 foreach (var plagueward in plaguewards)
                 {
@@ -313,12 +388,14 @@ namespace BadassVenom
                         continue;
                     }
                     currentPlagueTarget = getPlagueTarget(plagueward);
-                    if(currentPlagueTarget == null)
+                    //Console.WriteLine("getting plague target" + currentPlagueTarget);
+                    if (currentPlagueTarget == null)
                     {
                         continue;
 
                     }
                     var targetEnemy = enemies.Where(x => x.ClassId == currentPlagueTarget.Value).FirstOrDefault();
+                    //Console.WriteLine("target enemy is "+ targetEnemy);
                     if (targetEnemy != null && targetEnemy.Health > 120)
                     {
                         var blink = targetEnemy.FindItem("item_blink");
@@ -327,71 +404,106 @@ namespace BadassVenom
                             continue;
                         }
                         var newEnemy = targetEnemy;
-                        var stingModifier = targetEnemy.FindModifier("modifier_venomancer_poison_sting_ward");
-                        var stingTimer = stingModifier?.RemainingTime ?? 0;
-                        if (stingTimer > 4)
+                        var stingModifier = UnitExtensions.HasModifier(targetEnemy, "modifier_venomancer_poison_sting_ward");
+                        if(stingModifier == false)
+                        {
+                            //Console.WriteLine(DateTime.Now  + " KKKKK NUKL for " + targetEnemy.Name);
+                        }
+                        // var stingTimer = stingModifier?.RemainingTime ?? 0;
+                        var stingTimer = 15;
+                       // Console.WriteLine("stinger time" + stingModifier + "for enemy " + newEnemy.Name );
+                        if (stingModifier)
                         {
                             foreach (var enemy in enemies)
                             {
                                 if (enemy.Distance2D(plagueward) < 600 && shouldFocus(enemy) && enemy.ClassId != targetEnemy.ClassId && (enemy.Health < newEnemy.Health || !shouldFocus(newEnemy)))
                                 {
+                                   // Console.WriteLine("no if");
                                     newEnemy = enemy;
                                 }
                             }
                             if (newEnemy.ClassId != targetEnemy.ClassId)
                             {
+                                Console.WriteLine("attacking because health is lower");
                                 addPlagueTarget(plagueward, newEnemy);
                                 Utils.Sleep(1000, plagueward.Handle.ToString());
                             }
 
                         }
 
-                    }                    
+                    }
                 }
-
-                if ((plagueSpell.Level > 2 || poisonSpell.Level > 2) && canPlagueCast(plagueSpell))
+                if ((plagueSpell.Level > 2 || poisonSpell.Level > 3) && canPlagueCast(plagueSpell) && !sleepAutoPlague)
                 {
-                    var targetEnemy = enemies.Where(x => x.Distance2D(me) <= plagueRange).MinOrDefault(x => x.Health);
-                    
-                    if(targetEnemy != null)
+
+                    var targetEnemy = enemies.Where(x => x.Distance2D(me) <= plagueRange + plagueAttackRange).MinOrDefault(x => x.Health);
+
+                    if (targetEnemy != null)
                     {
                         var enemyTower = ObjectManager.GetEntitiesFast<Unit>()
                             .Where(
                                 x =>
                                     x.Team != me.Team && (x.ClassId == ClassId.CDOTA_BaseNPC_Tower) &&
                                     targetEnemy.Distance2D(x) <= 600 && me.Distance2D(x) > 400).FirstOrDefault();
-                        if(enemyTower == null)
+                        if (enemyTower == null)
                         {
-                            plagueSpell.UseAbility(targetEnemy.Position);
-                            Utils.Sleep(2000, "auto_plague");
+                            if (targetEnemy.Distance2D(me) < plagueRange)
+                            {
+                                plagueSpell.UseAbility(targetEnemy.Position);
+                                Utils.Sleep(2000, "auto_plague");
+                            }
+                            else if (targetEnemy.Distance2D(me) <= plagueAttackRange + plagueDistanceRange)
+                            {
+                                plagueSpell.UseAbility(getPlagueMaximumDistance(targetEnemy));
+                                Utils.Sleep(2000, "auto_plague");
+                            }
                         }
-                    }else if (autoPlague)
+                    }
+                    else if (autoPlague)
                     {
-                        if(Game.MousePosition.Distance2D(me) <= 850)
+                        if (Game.MousePosition.Distance2D(me) <= 850)
                         {
                             plagueSpell.UseAbility(Game.MousePosition);
                             Utils.Sleep(2000, "auto_plague");
                         }
 
                     }
+                    else if(plagueSpell.Level == 4 || poisonSpell.Level == 4)
+                    {
+                        var lowestHealthCreep = ObjectManager.GetEntitiesFast<Unit>().Where(x => x.Team == me.GetEnemyTeam() && !x.IsInvul() && x.IsAlive && x.IsVisible && x.Distance2D(me) < 850).MinOrDefault(x => x.Health);
+                        if (lowestHealthCreep != null)
+                        {
+                            plagueSpell.UseAbility(lowestHealthCreep.Position);
+                            Utils.Sleep(2000, "auto_plague");
+                        }
+                    }
                 }
 
                 foreach (var plagueward in plaguewards)
                 {
-                    if (!Utils.SleepCheck(plagueward.Handle.ToString())){
+                    if (!Utils.SleepCheck(plagueward.Handle.ToString()))
+                    {
                         continue;
                     }
                     currentPlagueTarget = getPlagueTarget(plagueward);
-                    if(currentPlagueTarget != null)
+
+                    if (currentPlagueTarget != null)
                     {
+                        if (currentPlagueTarget.Value == ClassId.CDOTA_BaseNPC_ShadowShaman_SerpentWard)
+                        {
+                            continue;
+                        }
+                        //Console.WriteLine("removing plague target");
                         var targetEnemy = enemies.Where(x => x.ClassId == currentPlagueTarget.Value).FirstOrDefault();
                         if (targetEnemy != null && targetEnemy.Distance2D(plagueward) > 600)
                         {
                             plagueTargets.Remove(currentPlagueTarget);
-                        }else if(targetEnemy != null && shouldFocus(targetEnemy))
+                        }
+                        else if (targetEnemy != null && shouldFocus(targetEnemy))
                         {
                             continue;
-                        }else
+                        }
+                        else
                         {
                             continue;
                         }
@@ -399,9 +511,11 @@ namespace BadassVenom
                     var lowestHealthEnemy = enemies.Where(x => x.Distance2D(plagueward) < 600 && shouldFocus(x)).MinOrDefault(x => x.Health);
                     if (lowestHealthEnemy != null)
                     {
+                        //Console.WriteLine("attacking because health is lower 2");
                         addPlagueTarget(plagueward, lowestHealthEnemy);
                         Utils.Sleep(1000, plagueward.Handle.ToString());
-                    }else if(currentPlagueTarget == null)
+                    }
+                    else if (currentPlagueTarget == null)
                     {
 
                         if (Utils.SleepCheck(plagueward.Handle.ToString()))
@@ -409,6 +523,7 @@ namespace BadassVenom
                             var lowestHealthCreep = ObjectManager.GetEntitiesFast<Creep>().Where(x => x.IsAlive && x.Team != me.Team && x.IsSpawned && x.IsVisible && x.Distance2D(plagueward) < 600).MinOrDefault(x => x.Health);
                             if (lowestHealthCreep != null)
                             {
+                                //Console.WriteLine("found lowest health creep " + lowestHealthCreep);
                                 plagueward.Attack(lowestHealthCreep);
                                 Utils.Sleep(1000, plagueward.Handle.ToString());
                             }
@@ -434,14 +549,14 @@ namespace BadassVenom
                             }
                         }*/
                     }
-                    
+
                 }
-                    
+
             }
 
             foreach (var ally in allies)
             {
-                if(ally.ClassId != me.ClassId)
+                if (ally.ClassId != me.ClassId)
                 {
                     useGhost(glimmer, me, enemies, true, ally);
                 }
@@ -459,7 +574,7 @@ namespace BadassVenom
                     }
                 }
                 if (isInDanger2(ally) && ally.Distance2D(me) <= 900 && !me.IsInvisible())
-                    {
+                {
                     foreach (var enemy in enemies)
                     {
                         if (enemy.Distance2D(me) <= 950 && IsFacing(enemy, ally))
@@ -511,7 +626,7 @@ namespace BadassVenom
                 if (enemy != null)
                 {
                     Orbwalking.Orbwalk(enemy, 0, 0, false, false);
-                    
+
                 }
                 else
                 {
@@ -529,15 +644,7 @@ namespace BadassVenom
                     me.Attack(Game.MousePosition);
                 }
             }
-            if (me.Level >= 15 && upgradedTalentRange == false)
-            {
-                var talentRange = me.Spellbook.Spells.First(x => x.Name == "special_bonus_cast_range_150");
-                if (talentRange.Level > 0)
-                {
-                    upgradedTalentRange = true;
-                    plagueRange += 150;
-                }
-            }
+
         }
 
         private static bool canPlagueCast(Ability spell)
@@ -551,11 +658,11 @@ namespace BadassVenom
             return plagueTarget;
         }
 
-        private static void addPlagueTarget(Unit plague, Hero target)
+        private static void addPlagueTarget(Unit plague, Unit target)
         {
             plague.Attack(target);
             PlagueTarget plagueTarget = getPlagueTarget(plague);
-            if(plagueTarget != null && plagueTarget.Value == target.ClassId)
+            if (plagueTarget != null && plagueTarget.Value == target.ClassId)
             {
                 return;
             }
@@ -566,13 +673,28 @@ namespace BadassVenom
             plagueTargets.Add(new PlagueTarget(plague.Handle, target.ClassId));
         }
 
+        private static Vector3 getPlagueMaximumDistance(Unit target)
+        {
+            //get the positions of our transforms
+            Vector3 pos1 = me.Position;
+            Vector3 pos2 = target.Position;
+
+            //get the direction between the two transforms -->
+            Vector3 dir = (pos2 - pos1);
+            dir.Normalize();
+            Vector3 test = pos1 + 850 * dir;
+            return test;            
+        }
+
         private static bool shouldFocus(Hero enemy)
         {
-            if(enemy.ClassId == ClassId.CDOTA_Unit_Hero_Shredder)
+            if (enemy.ClassId == ClassId.CDOTA_Unit_Hero_Shredder)
             {
                 return false;
             }
             return true;
         }
     }
+
+
 }
